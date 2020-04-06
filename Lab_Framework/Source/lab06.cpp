@@ -8,7 +8,6 @@
 #include <algorithm>
 #include <vector>
 
-
 #define GLEW_STATIC 1   // This allows linking with Static Library on Windows, without DLL
 #include <GL/glew.h>    // Include GLEW - OpenGL Extension Wrangler
 
@@ -18,102 +17,16 @@
 #include <glm/glm.hpp>  // GLM is an optimized math library with syntax to similar to OpenGL Shading Language
 #include <glm/gtc/matrix_transform.hpp> // include this to create transformation matrices
 #include <glm/common.hpp>
+#include <glm/gtc/type_ptr.hpp> // value_ptr
 
 #include "OBJloader.h"  //For loading .obj files
 #include "OBJloaderV2.h"  //For loading .obj files using a polygon list format
 
+#include "../shaderloader.h" // Load shaders
+#include "../stb_image.h"	 // Load textures
+
 using namespace glm;
 using namespace std;
-
-const char* getVertexShaderSource()
-{
-    // For now, you use a string for your shader code, in the assignment, shaders will be stored in .glsl files
-    return
-                "#version 330 core\n"
-                "layout (location = 0) in vec3 aPos;"
-                "layout (location = 1) in vec3 aNormal;"
-				""
-                "out vec3 vertexNormal;"
-				""
-                "uniform mat4 worldMatrix;"
-                "uniform mat4 viewMatrix = mat4(1.0);"  // default value for view matrix (identity)
-                "uniform mat4 projectionMatrix = mat4(1.0);"
-                ""
-                "void main()"
-                "{"
-                "   " 	//TODO 2 We should pass along the normal to the fragment shader
-                "   mat4 modelViewProjection = projectionMatrix * viewMatrix * worldMatrix;"
-                "   gl_Position = modelViewProjection * vec4(aPos.x, aPos.y, aPos.z, 1.0);"
-				"	vertexNormal = aNormal;"
-                "}";
-}
-
-const char* getFragmentShaderSource()
-{
-    return
-                "#version 330 core\n"
-				"in vec3 vertexNormal;"
-				"out vec4 FragColor;"
-				"void main()"
-                "{"
-                "   FragColor = vec4((vertexNormal.x+1.0f)*0.5f, (vertexNormal.y+1.0f)*0.5f, (vertexNormal.z+1.0f)*0.5f, 1.0f);" //TODO 2 Use the normals as fragment colors
-                "}";
-}
-
-
-
-int compileAndLinkShaders(const char* vertexShaderSource, const char* fragmentShaderSource)
-{
-    // compile and link shader program
-    // return shader program id
-    // ------------------------------------
-
-    // vertex shader
-    int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    
-    // check for shader compile errors
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    
-    // fragment shader
-    int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    
-    // check for shader compile errors
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    
-    // link shaders
-    int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    
-    // check for linking errors
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-    
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-    
-    return shaderProgram;
-}
 
 void setProjectionMatrix(int shaderProgram, mat4 projectionMatrix)
 {
@@ -188,6 +101,7 @@ GLuint setupModelEBO(string path, int& vertexCount)
 
 	//read the vertices from the cube.obj file
 	//We won't be needing the normals or UVs for this program
+	//loadOBJ2(path.c_str(), vertexIndices, vertices, normals, UVs);
 	loadOBJ2(path.c_str(), vertexIndices, vertices, normals, UVs);
 
 	GLuint VAO;
@@ -230,6 +144,27 @@ GLuint setupModelEBO(string path, int& vertexCount)
 	return VAO;
 }
 
+// shader variable setters
+void SetUniformMat4(GLuint shader_id, const char* uniform_name, mat4 uniform_value)
+{
+	glUseProgram(shader_id);
+	glUniformMatrix4fv(glGetUniformLocation(shader_id, uniform_name), 1, GL_FALSE, &uniform_value[0][0]);
+}
+
+void SetUniformVec3(GLuint shader_id, const char* uniform_name, vec3 uniform_value)
+{
+	glUseProgram(shader_id);
+	glUniform3fv(glGetUniformLocation(shader_id, uniform_name), 1, value_ptr(uniform_value));
+}
+
+template <class T>
+void SetUniform1Value(GLuint shader_id, const char* uniform_name, T uniform_value)
+{
+	glUseProgram(shader_id);
+	glUniform1i(glGetUniformLocation(shader_id, uniform_name), uniform_value);
+	glUseProgram(0);
+}
+
 int main(int argc, char*argv[])
 {
     // Initialize GLFW and OpenGL version
@@ -265,25 +200,28 @@ int main(int argc, char*argv[])
         glfwTerminate();
         return -1;
     }
-
-    
+  
     // Black background
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    
-    // Compile and link shaders here ...
-    int whiteShaderProgram = compileAndLinkShaders(getVertexShaderSource(), getFragmentShaderSource());
-    
+        
 	//Setup models
 #if defined(PLATFORM_OSX)
 	string cubePath = "Models/cube.obj";
 	string heraclesPath = "Models/heracles.obj";
+
+	string shaderPathPrefix = "Assets/Shaders/";
 #else
 	string cubePath = "../Assets/Models/cube.obj";
 	string heraclesPath = "../Assets/Models/heracles.obj";
+
+	string shaderPathPrefix = "../Assets/Shaders/";
 #endif
 
-	//TODO 1 load the more interesting model: "heracles.obj"
-	//TODO 3 load the models as EBOs instead of only VBOs
+	GLuint shaderScene = loadSHADER(shaderPathPrefix + "sceneVertex.glsl", shaderPathPrefix + "sceneFragment.glsl");
+	GLuint shaderShadow = loadSHADER(shaderPathPrefix + "shadow_vertex.glsl", shaderPathPrefix + "shadow_fragment.glsl");
+
+	// Compile and link shaders here ...
+	//int whiteShaderProgram = compileAndLinkShaders(getVertexShaderSource(), getFragmentShaderSource());
 
 	int cubeVertices;
 	GLuint cubeVAO = setupModelEBO(cubePath, cubeVertices);
@@ -291,8 +229,10 @@ int main(int argc, char*argv[])
 	int herVertices;
 	GLuint herVAO = setupModelEBO(heraclesPath, herVertices);
 
-	int activeVAOVertices = cubeVertices;
-	GLuint activeVAO = cubeVAO;
+	//int activeVAOVertices = cubeVertices;
+	//GLuint activeVAO = cubeVAO;
+	int activeVAOVertices = herVertices;
+	GLuint activeVAO = herVAO;
 
     // Camera parameters for view transform
     vec3 cameraPosition(0.6f,1.0f,10.0f);
@@ -300,7 +240,7 @@ int main(int argc, char*argv[])
     vec3 cameraUp(0.0f, 1.0f, 0.0f);
     
     // Other camera parameters
-    float cameraSpeed = 1.0f;
+    float cameraSpeed = 3.0f;
     float cameraFastSpeed = 2 * cameraSpeed;
     float cameraHorizontalAngle = 90.0f;
     float cameraVerticalAngle = 0.0f;
@@ -319,9 +259,9 @@ int main(int argc, char*argv[])
                              cameraUp ); // up
     
     // Set View and Projection matrices on both shaders
-    setViewMatrix(whiteShaderProgram, viewMatrix);
+    setViewMatrix(shaderScene, viewMatrix);
 
-    setProjectionMatrix(whiteShaderProgram, projectionMatrix);
+    setProjectionMatrix(shaderScene, projectionMatrix);
 
     // For frame time
     float lastFrameTime = glfwGetTime();
@@ -329,9 +269,14 @@ int main(int argc, char*argv[])
     double lastMousePosX, lastMousePosY;
     glfwGetCursorPos(window, &lastMousePosX, &lastMousePosY);
     
+	// light parameters
+	SetUniformVec3(shaderScene, "light_color", vec3(1.0, 1.0, 1.0));
+
     // Other OpenGL states to set once
     // Enable Backface culling
     glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glEnable(GL_CULL_FACE);
 
     // Entering Main Loop
     while(!glfwWindowShouldClose(window))
@@ -342,9 +287,30 @@ int main(int argc, char*argv[])
 
         // Each frame, reset color of each pixel to glClearColor
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  
-        // Draw colored geometry
-        glUseProgram(whiteShaderProgram);
+		
+ 
+		vec3 lightPosition = //  vec3(0.6f,50.0f,5.0f); // the location of the light in 3D space
+			vec3(sinf(glfwGetTime() * 6.0f * 3.141592f), sinf(glfwGetTime() * 3.141592f), cosf(glfwGetTime() * 3.141592f));
+		vec3 lightFocus(0.0, 0.0, -1.0);      // the point in 3D space the light "looks" at
+		vec3 lightDirection = normalize(lightFocus - lightPosition);
+
+		float lightNearPlane = 1.0f;
+		float lightFarPlane = 180.0f;
+
+		mat4 lightProjectionMatrix = frustum(-1.0f, 1.0f, -1.0f, 1.0f, lightNearPlane, lightFarPlane);
+		//perspective(20.0f, (float)DEPTH_MAP_TEXTURE_SIZE / (float)DEPTH_MAP_TEXTURE_SIZE, lightNearPlane, lightFarPlane);
+		mat4 lightViewMatrix = lookAt(lightPosition, lightFocus, vec3(0.0f, 1.0f, 0.0f));
+		mat4 lightSpaceMatrix = lightProjectionMatrix * lightViewMatrix;
+
+		SetUniformMat4(shaderShadow, "light_space_matrix", lightSpaceMatrix);
+		SetUniformMat4(shaderScene, "light_space_matrix", lightSpaceMatrix);
+
+		// Set light position on scene shader
+		SetUniformVec3(shaderScene, "light_position", lightPosition);
+		SetUniformVec3(shaderScene, "view_position", cameraPosition);
+
+		// Set light direction on scene shader
+		SetUniformVec3(shaderScene, "light_direction", lightDirection);
 			           
         // Spinning model rotation animation
         spinningAngle += 45.0f * dt; //This is equivalent to 45 degrees per second
@@ -355,13 +321,22 @@ int main(int argc, char*argv[])
 			glm::rotate(mat4(1.0f), radians(spinningAngle), vec3(0.0f, 1.0f, 0.0f)) *
 			glm::rotate(mat4(1.0f), radians(0.0f), vec3(1.0f, 0.0f, 0.0f)) *
 			glm::scale(mat4(1.0f), vec3(0.2f));
-        setWorldMatrix(whiteShaderProgram, modelWorldMatrix);
+
+        setWorldMatrix(shaderScene, modelWorldMatrix);    
+		setWorldMatrix(shaderShadow, modelWorldMatrix);
+
+		SetUniformVec3(shaderScene, "objColor", glm::vec3(0.0f, 0.0f, 1.0f));
+		SetUniform1Value(shaderScene, "alpha", 0.5f);
+
+		// Draw colored geometry
+		glUseProgram(shaderScene);
+		glUseProgram(shaderShadow);
 
 		// Set the view matrix for first person camera
 		mat4 viewMatrix(1.0f);
 		viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
-		setViewMatrix(whiteShaderProgram, viewMatrix);
-
+		setViewMatrix(shaderScene, viewMatrix);
+		
 		//Draw the stored vertex objects
 		glBindVertexArray(activeVAO);
 		// glDrawArrays(GL_TRIANGLES, 0, activeVAOVertices);
@@ -378,7 +353,6 @@ int main(int argc, char*argv[])
         // Handle inputs
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 			glfwSetWindowShouldClose(window, true);
-
         
         // This was solution for Lab02 - Moving camera exercise
         // We'll change this to be a first or third person camera
@@ -435,20 +409,18 @@ int main(int argc, char*argv[])
         }
 
 		//Using number keys to switch between models
-		if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
-		{
-			activeVAO = cubeVAO;
-			activeVAOVertices = cubeVertices;
-		}
-		if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
-		{
-			//TODO 1 Add a key to switch between the two models
-			activeVAO = herVAO;
-			activeVAOVertices = herVertices;
-		}
+		//if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+		//{
+		//	activeVAO = cubeVAO;
+		//	activeVAOVertices = cubeVertices;
+		//}
+		//if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+		//{
+		//	//TODO 1 Add a key to switch between the two models
+		//	activeVAO = herVAO;
+		//	activeVAOVertices = herVertices;
+		//}
    
-
-
     }
 
     glfwTerminate();

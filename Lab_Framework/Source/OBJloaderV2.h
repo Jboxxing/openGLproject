@@ -117,14 +117,14 @@ bool loadOBJ2(
 		out_uvs.resize(temp_normals.size());
 	for (unsigned int i = 0; i<vertexIndices.size(); i++) {
 		int vi = vertexIndices[i];
-		if (normalIndices.size() != 0) {
-			int ni = normalIndices[i];
-			out_normals[vi] = temp_normals[ni];
-		}
-		if (uvIndices.size() != 0 && i < uvIndices.size()) {
-			int ui = uvIndices[i];
-			out_uvs[vi] = temp_uvs[ui];
-		}
+		//if (normalIndices.size() != 0) {
+		//	int ni = normalIndices[i];
+		//	out_normals[vi] = temp_normals[ni];
+		//}
+		//if (uvIndices.size() != 0 && i < uvIndices.size()) {
+		//	int ui = uvIndices[i];
+		//	out_uvs[vi] = temp_uvs[ui];
+		//}
 	}
 
 	return true;
