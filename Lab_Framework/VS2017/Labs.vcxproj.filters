@@ -72,10 +72,10 @@
     <ClInclude Include="..\Source\OBJloaderV2.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\ThirdParty\shaderloader.h">
+    <ClInclude Include="..\Source\shaderloader.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\ThirdParty\stb_image.h">
+    <ClInclude Include="..\Source\stb_image.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
