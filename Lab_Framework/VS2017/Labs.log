@@ -1,4 +1,4 @@
-﻿  lab06.cpp
+﻿  SceneObject.cpp
 C:\dev\openGLproject\Lab_Framework\Source\OBJloader.h(20,1): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(208): message : see declaration of 'fopen'
 C:\dev\openGLproject\Lab_Framework\Source\OBJloader.h(31,1): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
@@ -34,10 +34,12 @@ C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(2263): 
 C:\dev\openGLproject\Lab_Framework\Source\OBJloaderV2.h(78,1): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(2263): message : see declaration of 'sscanf'
 C:\dev\openGLproject\Lab_Framework\Source\OBJloaderV2.h(81,1): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  lab06.cpp
 C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(2263): message : see declaration of 'sscanf'
 C:\dev\openGLproject\Lab_Framework\Source\shaderloader.h(25,10): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'std::string'
-C:\dev\openGLproject\Lab_Framework\Source\lab06.cpp(408,25): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\dev\openGLproject\Lab_Framework\Source\lab06.cpp(460,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\dev\openGLproject\Lab_Framework\Source\lab06.cpp(584,62): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
-C:\dev\openGLproject\Lab_Framework\Source\lab06.cpp(585,62): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+C:\dev\openGLproject\Lab_Framework\Source\lab06.cpp(284,25): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\dev\openGLproject\Lab_Framework\Source\lab06.cpp(342,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\dev\openGLproject\Lab_Framework\Source\lab06.cpp(480,62): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+  Generating Code...
+C:\dev\openGLproject\Lab_Framework\Source\lab06.cpp(481,62): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
   Labs.vcxproj -> C:\dev\openGLproject\Lab_Framework\VS2017\/../Bin/Labs-Debug.exe

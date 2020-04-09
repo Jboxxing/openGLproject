@@ -119,11 +119,13 @@
   <ItemGroup>
     <ClInclude Include="..\Source\OBJloader.h" />
     <ClInclude Include="..\Source\OBJloaderV2.h" />
+    <ClInclude Include="..\Source\SceneObject.h" />
     <ClInclude Include="..\Source\shaderloader.h" />
     <ClInclude Include="..\Source\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\lab06.cpp" />
+    <ClCompile Include="..\Source\SceneObject.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

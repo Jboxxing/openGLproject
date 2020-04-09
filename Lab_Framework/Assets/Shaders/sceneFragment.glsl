@@ -9,12 +9,12 @@ in vec4 FragPosLightSpace;
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 
-//uniform vec3 lightColor;
 //uniform vec3 objectColor;
+uniform vec3 lightColor = vec3(1.0f);
 
-const float shading_ambient_strength    = 0.4;
-const float shading_diffuse_strength    = 0.2;
-const float shading_specular_strength   = 0.9;
+uniform vec3 shading_ambient_strength  = vec3(0.5);
+uniform vec3 shading_diffuse_strength  = vec3(0.5);
+uniform vec3 shading_specular_strength = vec3(0.2);
 
 uniform sampler2D shadow_map;
 uniform sampler2D diffuse_texture;
@@ -42,8 +42,6 @@ void main()
 	vec3 color = texture(diffuse_texture, TextCoords).rgb;
 	vec3 normal = normalize(Normal);
 	
-	vec3 lightColor = vec3(1.0f);
-
 	// Ambient
 	ambient = shading_ambient_strength * color;
 

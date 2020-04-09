@@ -1,8 +1,3 @@
-//
-// COMP 371 Lab 6 - Models and EBOs
-//
-// Created by Zachary Lapointe on 17/07/2019.
-//
 
 #include <iostream>
 #include <algorithm>
@@ -19,15 +14,13 @@
 #include <glm/common.hpp>
 #include <glm/gtc/type_ptr.hpp> // value_ptr
 
-#include "OBJloader.h"  //For loading .obj files
-#include "OBJloaderV2.h"  //For loading .obj files using a polygon list format
-
 #include "shaderloader.h" // Load shaders
+
+#include "SceneObject.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-using namespace glm;
 using namespace std;
 
 GLuint loadTexture(const char* filename)
@@ -69,67 +62,25 @@ GLuint loadTexture(const char* filename)
 	return textureId;
 }
 
-void setProjectionMatrix(int shaderProgram, mat4 projectionMatrix)
+void setProjectionMatrix(int shaderProgram, glm::mat4 projectionMatrix)
 {
     glUseProgram(shaderProgram);
     GLuint projectionMatrixLocation = glGetUniformLocation(shaderProgram, "projection");
     glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
 }
 
-void setViewMatrix(int shaderProgram, mat4 viewMatrix)
+void setViewMatrix(int shaderProgram, glm::mat4 viewMatrix)
 {
     glUseProgram(shaderProgram);
     GLuint viewMatrixLocation = glGetUniformLocation(shaderProgram, "view");
     glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
 }
 
-void setWorldMatrix(int shaderProgram, mat4 worldMatrix)
+void setWorldMatrix(int shaderProgram, glm::mat4 worldMatrix)
 {
 	glUseProgram(shaderProgram);
 	GLuint worldMatrixLocation = glGetUniformLocation(shaderProgram, "worldMatrix");
 	glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &worldMatrix[0][0]);
-}
-
-GLuint setupModelVBO(string path, int& vertexCount) {
-	std::vector<glm::vec3> vertices;
-	std::vector<glm::vec3> normals;
-	std::vector<glm::vec2> UVs;
-	
-	//read the vertex data from the model's OBJ file
-	loadOBJ(path.c_str(), vertices, normals, UVs);
-
-	GLuint VAO;
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO); //Becomes active VAO
-	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
-
-	//Vertex VBO setup
-	GLuint vertices_VBO;
-	glGenBuffers(1, &vertices_VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, vertices_VBO);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices.front(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
-
-	//Normals VBO setup
-	GLuint normals_VBO;
-	glGenBuffers(1, &normals_VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, normals_VBO);
-	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals.front(), GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(1);
-
-	//UVs VBO setup
-	GLuint uvs_VBO;
-	glGenBuffers(1, &uvs_VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, uvs_VBO);
-	glBufferData(GL_ARRAY_BUFFER, UVs.size() * sizeof(glm::vec2), &UVs.front(), GL_STATIC_DRAW);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(2);
-
-	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs, as we are using multiple VAOs)
-	vertexCount = vertices.size();
-	return VAO;
 }
 
 GLuint setUpModelInstanceEBO(string path, int& vertexCount) {
@@ -141,7 +92,7 @@ GLuint setUpModelInstanceEBO(string path, int& vertexCount) {
 	//read the vertices from the cube.obj file
 	//We won't be needing the normals or UVs for this program
 	//loadOBJ2(path.c_str(), vertexIndices, vertices, normals, UVs);
-	loadOBJ2(path.c_str(), vertexIndices, vertices, normals, UVs);
+	//loadOBJ2(path.c_str(), vertexIndices, vertices, normals, UVs);
 	
 	// generate a list of 100 quad locations/translation-vectors
 	// ---------------------------------------------------------
@@ -207,69 +158,14 @@ GLuint setUpModelInstanceEBO(string path, int& vertexCount) {
 	return VAO;
 }
 
-//Sets up a model using an Element Buffer Object to refer to vertex data
-GLuint setupModelEBO(string path, int& vertexCount)
-{
-	vector<int> vertexIndices; //The contiguous sets of three indices of vertices, normals and UVs, used to make a triangle
-	vector<glm::vec3> vertices;
-	vector<glm::vec3> normals;
-	vector<glm::vec2> UVs;
-
-	//read the vertices from the cube.obj file
-	//We won't be needing the normals or UVs for this program
-	//loadOBJ2(path.c_str(), vertexIndices, vertices, normals, UVs);
-	loadOBJ2(path.c_str(), vertexIndices, vertices, normals, UVs);
-
-	GLuint VAO;
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO); //Becomes active VAO
-	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
-
-	//Vertex VBO setup
-	GLuint vertices_VBO;
-	glGenBuffers(1, &vertices_VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, vertices_VBO);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices.front(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
-
-	//Normals VBO setup
-	GLuint normals_VBO;
-	glGenBuffers(1, &normals_VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, normals_VBO);
-	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals.front(), GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(1);
-
-	//UVs VBO setup
-	GLuint uvs_VBO;
-	glGenBuffers(1, &uvs_VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, uvs_VBO);
-	glBufferData(GL_ARRAY_BUFFER, UVs.size() * sizeof(glm::vec2), &UVs.front(), GL_STATIC_DRAW);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-
-	glVertexAttribDivisor(3, 1);
-	glEnableVertexAttribArray(2);
-
-	//EBO setup
-	GLuint EBO;
-	glGenBuffers(1, &EBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexIndices.size() * sizeof(int), &vertexIndices.front(), GL_STATIC_DRAW);
-
-	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO
-	vertexCount = vertexIndices.size();
-	return VAO;
-}
-
 // shader variable setters
-void SetUniformMat4(GLuint shader_id, const char* uniform_name, mat4 uniform_value)
+void SetUniformMat4(GLuint shader_id, const char* uniform_name, glm::mat4 uniform_value)
 {
 	glUseProgram(shader_id);
 	glUniformMatrix4fv(glGetUniformLocation(shader_id, uniform_name), 1, GL_FALSE, &uniform_value[0][0]);
 }
 
-void SetUniformVec3(GLuint shader_id, const char* uniform_name, vec3 uniform_value)
+void SetUniformVec3(GLuint shader_id, const char* uniform_name, glm::vec3 uniform_value)
 {
 	glUseProgram(shader_id);
 	glUniform3fv(glGetUniformLocation(shader_id, uniform_name), 1, value_ptr(uniform_value));
@@ -299,8 +195,10 @@ int main(int argc, char*argv[])
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 #endif
 
+	const int WIDTH = 1024, HEIGHT = 768;
+
     // Create Window and rendering context using GLFW, resolution is 800x600
-    GLFWwindow* window = glfwCreateWindow(1024, 768, "Comp371 - A3", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Comp371 - A3", NULL, NULL);
     if (window == NULL)
     {
         std::cerr << "Failed to create GLFW window" << std::endl;
@@ -334,11 +232,13 @@ int main(int argc, char*argv[])
 #else
 	string cubePath = "../Assets/Models/cube.obj";
 	string spherePath = "../Assets/Models/uvSphere.obj";
+	string planePath = "../Assets/Models/plane.obj";
 
 	string shaderPathPrefix = "../Assets/Shaders/";
 
 	char* brickTexture  = "../Assets/Textures/brick.jpg";
 	char* cementTexture = "../Assets/Textures/cement.jpg";
+	char* grassTexture = "../Assets/Textures/grass.jpg";
 #endif
 
 	GLuint shaderScene = loadSHADER(shaderPathPrefix + "sceneVertex.glsl", shaderPathPrefix + "sceneFragment.glsl");
@@ -348,38 +248,15 @@ int main(int argc, char*argv[])
 
 	GLuint brickTextureID = loadTexture(brickTexture);
 	GLuint cementTextureID = loadTexture(cementTexture);
-	
-	int cubeVertices;
-	GLuint cubeVAO = setupModelVBO(cubePath, cubeVertices);	
-	
-	int sphereVertices;
-	GLuint sphereVAO = setupModelEBO(spherePath, sphereVertices);
-
-	//int cubeVertices;
-	//GLuint cubeInstanceVAO = setUpModelInstanceEBO(cubePath, cubeVertices);
-
-	// Draw colored geometry
-	glUseProgram(shaderShadow);
-	glUseProgram(shaderScene);
-	glUseProgram(lightSourceScene);
-	
-	//int herVertices;
-	//GLuint herVAO = setupModelEBO(heraclesPath, herVertices);
-
-	//int activeVAOVertices = sphereVertices;
-	//GLuint activeVAO = sphereVAO;
-	int activeVAOVertices = cubeVertices;
-	GLuint activeVAO = cubeVAO;
-	//int activeVAOVertices = cubeVertices;
-	//GLuint activeVAO = cubeInstanceVAO;
+	GLuint grassTextureID = loadTexture(grassTexture);
 
     // Camera parameters for view transform
-    vec3 cameraPosition(0.0f, 1.0f, 10.0f);
-    vec3 cameraLookAt(0.0f, 0.0f, -1.0f);
-    vec3 cameraUp(0.0f, 1.0f, 0.0f);
+	glm::vec3 cameraPosition(0.0f, 1.0f, 10.0f);
+	glm::vec3 cameraLookAt(0.0f, 0.0f, -1.0f);
+	glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
     
     // Other camera parameters
-    float cameraSpeed = 3.0f;
+    float cameraSpeed = 5.0f;
     float cameraFastSpeed = 2 * cameraSpeed;
     float cameraHorizontalAngle = 90.0f;
     float cameraVerticalAngle = 0.0f;
@@ -390,18 +267,17 @@ int main(int argc, char*argv[])
     float spinningAngle = 0.0f;
     
     // Set projection matrix for shader, this won't change
-    mat4 projectionMatrix = glm::perspective(70.0f,            // field of view in degrees
+	glm::mat4 projectionMatrix = glm::perspective(70.0f,            // field of view in degrees
                                              1024.0f / 768.0f,  // aspect ratio
                                              0.01f, 100.0f);   // near and far (near > 0)
     
     // Set initial view matrix
-    mat4 viewMatrix = lookAt(cameraPosition,  // eye
+	glm::mat4 viewMatrix = lookAt(cameraPosition,  // eye
                              cameraPosition + cameraLookAt,  // center
                              cameraUp ); // up
     
     // Set View and Projection matrices on both shaders
     setViewMatrix(shaderScene, viewMatrix);
-
     setProjectionMatrix(shaderScene, projectionMatrix);
 
     // For frame time
@@ -418,7 +294,7 @@ int main(int argc, char*argv[])
 	std::vector<glm::mat4> posVector;
 
 	for (unsigned int i = 0; i < 1000; i++) {
-		posVector.push_back(glm::mat4(1.0f) * glm::translate(mat4(1.0f), vec3(rand() % 100, -7.0f, -rand() % 10)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.3f)));
+		posVector.push_back(glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), glm::vec3(rand() % 100 + (-50), -7.0f, -rand() % 10 + (-5))) * glm::scale(glm::mat4(1.0f), glm::vec3(0.3f)));
 	};
 
 	// configure depth map FBO
@@ -452,6 +328,12 @@ int main(int argc, char*argv[])
 
 	// lighting
 	glm::vec3 lightPos(30.0f, 10.0f, -5.0f);
+	glm::vec3 lightColor(0.7f, 0.6f, 0.2f);
+
+	SceneObject obj("CUBE", glm::vec3(0.0f), shaderScene, grassTextureID, cubePath, 0);
+	SceneObject obj1("SPHERE", glm::vec3(0.0f), shaderScene, brickTextureID, spherePath, 1);
+	SceneObject obj2("LIGHT", glm::vec3(0.0f), lightSourceScene, cementTextureID, cubePath, 0);
+	SceneObject obj3("FLOOR", glm::vec3(0.0f), shaderScene, grassTextureID, planePath, 0);
 
     // Entering Main Loop
     while(!glfwWindowShouldClose(window))
@@ -464,55 +346,49 @@ int main(int argc, char*argv[])
 		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		mat4 modelWorldMatrix(1.0f);
-		mat4 viewMatrix(1.0f);
+		glm::mat4 modelWorldMatrix(1.0f);
+		glm::mat4 viewMatrix(1.0f);
 
 		viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
 
 		setViewMatrix(shaderScene, viewMatrix);
 		setProjectionMatrix(shaderScene, projectionMatrix);
-
+		
 		///////////////////////////////////////////////////////////////////////
 		////////
 		////////						MAIN WORLD SHADER
 		////////
 		///////////////////////////////////////////////////////////////////////
 
-		//SetUniformMat4(shaderScene, "model", modelWorldMatrix * glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -9.0f, 0.0f)));
-		//glBindVertexArray(activeVAO);
-		//glDrawElements(GL_TRIANGLES, activeVAOVertices, GL_UNSIGNED_INT, 0);
-
 		float lightNearPlane = 1.0f;
-		float lightFarPlane = 8.0f;
+		float lightFarPlane = 7.5f;
 
-		glm::vec3 lightFocus(0.2f);
+		glm::vec3 lightFocus(0.0f);
 
-		mat4 lightProjectionMatrix = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, lightNearPlane, lightFarPlane);
+		glm::mat4 lightProjectionMatrix = glm::frustum(-1.0f, 1.0f, -1.0f, 1.0f, lightNearPlane, lightFarPlane);
 			// glm::perspective(20.0f, (float)DEPTH_MAP_TEXTURE_SIZE / (float)DEPTH_MAP_TEXTURE_SIZE, lightNearPlane, lightFarPlane);
-		mat4 lightViewMatrix = glm::lookAt(lightPos, lightFocus, glm::vec3(0.0f, 1.0f, 0.0f));
-		mat4 lightSpaceMatrix = lightProjectionMatrix * lightViewMatrix;
+		glm::mat4 lightViewMatrix = glm::lookAt(lightPos, lightFocus, glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat4 lightSpaceMatrix = lightProjectionMatrix * lightViewMatrix;
 
 		glUseProgram(shaderShadow);
 
 		SetUniformMat4(shaderShadow, "lightSpaceMatrix", lightSpaceMatrix);
+		obj.setShader(shaderShadow);
 
 		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 			glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 			glClear(GL_DEPTH_BUFFER_BIT);
-			//glActiveTexture(GL_TEXTURE0);
-			
+
+			glBindVertexArray(obj.getVAO());
 			for (unsigned int i = 0; i < posVector.size(); i++) {
-				glBindVertexArray(activeVAO);
-				glBindTexture(GL_TEXTURE_2D, brickTextureID);
-				SetUniformMat4(shaderShadow, "model", posVector.at(i));
-				//glDrawElements(GL_TRIANGLES, activeVAOVertices, GL_UNSIGNED_INT, 0);
-				glDrawArrays(GL_TRIANGLES, 0, activeVAOVertices);
+				SetUniformMat4(shaderShadow, "model", posVector.at(i) * glm::scale(glm::mat4(1.0f), glm::vec3(0.25f)));
+				obj.Draw();
 			}
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// reset viewport
-		glViewport(0, 0, 1024, 768);
+		glViewport(0, 0, 1024, HEIGHT);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glUseProgram(shaderScene);
@@ -523,18 +399,45 @@ int main(int argc, char*argv[])
 		SetUniformMat4(shaderScene, "lightSpaceMatrix", lightSpaceMatrix);
 		SetUniformVec3(shaderScene, "lightPos", lightPos);
 		SetUniformVec3(shaderScene, "viewPos", cameraPosition);
+		SetUniformVec3(shaderScene, "lightColor", lightColor);
 
-		//SetUniformVec3(shaderScene, "objectColor", glm::vec3(0.1f, 0.7f, 0.1f));
-		
-		for (unsigned int i = 0; i < posVector.size(); i++) {
-			glBindVertexArray(activeVAO);
-			glBindTexture(GL_TEXTURE_2D, brickTextureID);
-			SetUniformMat4(shaderScene, "model", posVector.at(i) * glm::scale(glm::mat4(1.0f), glm::vec3(0.25f)));
-			//glDrawElements(GL_TRIANGLES, activeVAOVertices, GL_UNSIGNED_INT, 0);
-			glDrawArrays(GL_TRIANGLES, 0, activeVAOVertices);
+		obj.setShader(shaderScene);
+		for (unsigned int i = 0; i < posVector.size(); i++) 
+		{
+			if (i < posVector.size() / 3)
+			{
+				glBindVertexArray(obj.getVAO());
+				obj.setTexture(brickTextureID);
+				SetUniformMat4(shaderScene, "model", posVector.at(i) * glm::scale(glm::mat4(1.0f), glm::vec3(0.3f)));
+				obj.Draw();
+			}
+			else if (i > posVector.size() / 3 && i < (2 * posVector.size()) / 3)
+			{
+				glBindVertexArray(obj.getVAO());
+				obj.setTexture(cementTextureID);
+				SetUniformMat4(shaderScene, "model", posVector.at(i) * glm::scale(glm::mat4(1.0f), glm::vec3(0.23f)));
+				obj.Draw();
+			}
+			else
+			{
+				glBindVertexArray(obj.getVAO());
+				obj.setTexture(grassTextureID);
+				SetUniformMat4(shaderScene, "model", posVector.at(i) * glm::scale(glm::mat4(1.0f), glm::vec3(0.28f)));
+				obj.Draw();
+			}
 		}
 
-		glBindVertexArray(0);
+		glBindVertexArray(obj1.getVAO());
+		SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f)));
+		obj1.Draw();
+
+		SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f)));
+		glBindVertexArray(obj2.getVAO());
+		obj2.Draw();
+
+		glBindVertexArray(obj3.getVAO());
+		SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(5.0f)));
+		obj3.Draw();
 
 		///////////////////////////////////////////////////////////////////////
 		////////
@@ -548,12 +451,6 @@ int main(int argc, char*argv[])
 		SetUniformMat4(lightSourceScene, "projection", projectionMatrix);
 		SetUniformMat4(lightSourceScene, "view", viewMatrix);
 
-		glBindVertexArray(activeVAO);
-		//glDrawElements(GL_TRIANGLES, activeVAOVertices, GL_UNSIGNED_INT, 0);
-		glDrawArrays(GL_TRIANGLES, 0, activeVAOVertices);
-
-		glBindVertexArray(0);
-
         // End Frame
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -566,7 +463,6 @@ int main(int argc, char*argv[])
         // We'll change this to be a first or third person camera
         bool fastCam = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
         float currentCameraSpeed = (fastCam) ? cameraFastSpeed : cameraSpeed;
-        
         
         // - Calculate mouse motion dx and dy
         // - Update camera horizontal and vertical angle
@@ -587,11 +483,11 @@ int main(int argc, char*argv[])
         // Clamp vertical angle to [-85, 85] degrees
         cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, cameraVerticalAngle));
         
-        float theta = radians(cameraHorizontalAngle);
-        float phi = radians(cameraVerticalAngle);
+        float theta = glm::radians(cameraHorizontalAngle);
+        float phi = glm::radians(cameraVerticalAngle);
         
-        cameraLookAt = vec3(cosf(phi)*cosf(theta), sinf(phi), -cosf(phi)*sinf(theta));
-        vec3 cameraSideVector = glm::cross(cameraLookAt, vec3(0.0f, 1.0f, 0.0f));
+        cameraLookAt = glm::vec3(cosf(phi)*cosf(theta), sinf(phi), -cosf(phi)*sinf(theta));
+		glm::vec3 cameraSideVector = glm::cross(cameraLookAt, glm::vec3(0.0f, 1.0f, 0.0f));
         
 		glm::normalize(cameraSideVector);
         
@@ -615,6 +511,30 @@ int main(int argc, char*argv[])
         {
             cameraPosition -= cameraSideVector * dt * currentCameraSpeed;
         }  
+
+		if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)
+		{
+			lightPos   += glm::vec3(1.0f, 0.0f, 0.0f);
+			//lightFocus += glm::vec3(1.0f, 0.0f, 0.0f);
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+		{
+			lightPos   += glm::vec3(-1.0f, 0.0f, 0.0f);
+			//lightFocus += glm::vec3(-1.0f, 0.0f, 0.0f);
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
+		{
+			lightPos   += glm::vec3(0.0f, 1.0f, 0.0f);
+			//lightFocus += glm::vec3(1.0f, 0.0f, 0.0f);
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+		{
+			lightPos   += glm::vec3(0.0f, -1.0f, 0.0f);
+			//lightFocus += glm::vec3(-1.0f, 0.0f, 0.0f);
+		}
     }
 
     glfwTerminate();

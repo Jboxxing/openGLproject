@@ -78,8 +78,14 @@
     <ClInclude Include="..\Source\stb_image.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Source\SceneObject.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Source\SceneObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\Source\lab06.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
