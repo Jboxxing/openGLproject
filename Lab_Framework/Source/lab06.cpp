@@ -17,6 +17,7 @@
 #include "shaderloader.h" // Load shaders
 
 #include "SceneObject.h"
+#include "CameraControl.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -62,19 +63,19 @@ GLuint loadTexture(const char* filename)
 	return textureId;
 }
 
-void setProjectionMatrix(int shaderProgram, glm::mat4 projectionMatrix)
-{
-    glUseProgram(shaderProgram);
-    GLuint projectionMatrixLocation = glGetUniformLocation(shaderProgram, "projection");
-    glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
-}
-
-void setViewMatrix(int shaderProgram, glm::mat4 viewMatrix)
-{
-    glUseProgram(shaderProgram);
-    GLuint viewMatrixLocation = glGetUniformLocation(shaderProgram, "view");
-    glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
-}
+//void setProjectionMatrix(int shaderProgram, glm::mat4 projectionMatrix)
+//{
+//    glUseProgram(shaderProgram);
+//    GLuint projectionMatrixLocation = glGetUniformLocation(shaderProgram, "projection");
+//    glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
+//}
+//
+//void setViewMatrix(int shaderProgram, glm::mat4 viewMatrix)
+//{
+//    glUseProgram(shaderProgram);
+//    GLuint viewMatrixLocation = glGetUniformLocation(shaderProgram, "view");
+//    glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
+//}
 
 void setWorldMatrix(int shaderProgram, glm::mat4 worldMatrix)
 {
@@ -158,7 +159,6 @@ GLuint setUpModelInstanceEBO(string path, int& vertexCount) {
 	return VAO;
 }
 
-// shader variable setters
 void SetUniformMat4(GLuint shader_id, const char* uniform_name, glm::mat4 uniform_value)
 {
 	glUseProgram(shader_id);
@@ -195,7 +195,7 @@ int main(int argc, char*argv[])
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 #endif
 
-	const int WIDTH = 1024, HEIGHT = 768;
+	const float WIDTH = 1024.0f, HEIGHT = 768.0f;
 
     // Create Window and rendering context using GLFW, resolution is 800x600
     GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Comp371 - A3", NULL, NULL);
@@ -207,7 +207,6 @@ int main(int argc, char*argv[])
     }
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwMakeContextCurrent(window);
-
     
     // Initialize GLEW
     glewExperimental = true; // Needed for core profile
@@ -241,14 +240,13 @@ int main(int argc, char*argv[])
 	char* grassTexture = "../Assets/Textures/grass.jpg";
 #endif
 
-	GLuint shaderScene = loadSHADER(shaderPathPrefix + "sceneVertex.glsl", shaderPathPrefix + "sceneFragment.glsl");
+	GLuint shaderScene      = loadSHADER(shaderPathPrefix + "sceneVertex.glsl", shaderPathPrefix + "sceneFragment.glsl");
 	GLuint lightSourceScene = loadSHADER(shaderPathPrefix + "lightObjectVertex.glsl", shaderPathPrefix + "lightObjectFragment.glsl");
+	GLuint shaderShadow     = loadSHADER(shaderPathPrefix + "shadow_vertex.glsl", shaderPathPrefix + "shadow_fragment.glsl");
 
-	GLuint shaderShadow = loadSHADER(shaderPathPrefix + "shadow_vertex.glsl", shaderPathPrefix + "shadow_fragment.glsl");
-
-	GLuint brickTextureID = loadTexture(brickTexture);
+	GLuint brickTextureID  = loadTexture(brickTexture);
 	GLuint cementTextureID = loadTexture(cementTexture);
-	GLuint grassTextureID = loadTexture(grassTexture);
+	GLuint grassTextureID  = loadTexture(grassTexture);
 
     // Camera parameters for view transform
 	glm::vec3 cameraPosition(0.0f, 1.0f, 10.0f);
@@ -262,43 +260,29 @@ int main(int argc, char*argv[])
     float cameraVerticalAngle = 0.0f;
 
 	const float DEPTH_MAP_TEXTURE_SIZE = 1024;
-
-    // Spinning cube at camera position
-    float spinningAngle = 0.0f;
     
-    // Set projection matrix for shader, this won't change
 	glm::mat4 projectionMatrix = glm::perspective(70.0f,            // field of view in degrees
-                                             1024.0f / 768.0f,  // aspect ratio
-                                             0.01f, 100.0f);   // near and far (near > 0)
+                                             WIDTH / HEIGHT,  // aspect ratio
+                                             0.01f, 300.0f);   // near and far (near > 0)
     
-    // Set initial view matrix
-	glm::mat4 viewMatrix = lookAt(cameraPosition,  // eye
-                             cameraPosition + cameraLookAt,  // center
-                             cameraUp ); // up
-    
-    // Set View and Projection matrices on both shaders
-    setViewMatrix(shaderScene, viewMatrix);
-    setProjectionMatrix(shaderScene, projectionMatrix);
+	glm::mat4 viewMatrix = glm::lookAt(cameraPosition,           // eye
+                             cameraPosition + cameraLookAt, // center
+                             cameraUp);                     // up
 
-    // For frame time
-    float lastFrameTime = glfwGetTime();
-    int lastMouseLeftState = GLFW_RELEASE;
-    double lastMousePosX, lastMousePosY;
-    glfwGetCursorPos(window, &lastMousePosX, &lastMousePosY);
+	CameraControl mainCamera(shaderScene, viewMatrix, projectionMatrix);
+
+    //float lastFrameTime = glfwGetTime();
+    //int lastMouseLeftState = GLFW_RELEASE;
+    //double lastMousePosX, lastMousePosY;
+    //glfwGetCursorPos(window, &lastMousePosX, &lastMousePosY);
 
     // Other OpenGL states to set once
     glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glEnable(GL_CULL_FACE);
 
-	std::vector<glm::mat4> posVector;
-
-	for (unsigned int i = 0; i < 1000; i++) {
-		posVector.push_back(glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), glm::vec3(rand() % 100 + (-50), -7.0f, -rand() % 10 + (-5))) * glm::scale(glm::mat4(1.0f), glm::vec3(0.3f)));
-	};
-
 	// configure depth map FBO
-	// -----------------------
+	// ----------------------- 
 	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 	unsigned int depthMapFBO;
 	glGenFramebuffers(1, &depthMapFBO);
@@ -330,17 +314,37 @@ int main(int argc, char*argv[])
 	glm::vec3 lightPos(30.0f, 10.0f, -5.0f);
 	glm::vec3 lightColor(0.7f, 0.6f, 0.2f);
 
-	SceneObject obj("CUBE", glm::vec3(0.0f), shaderScene, grassTextureID, cubePath, 0);
-	SceneObject obj1("SPHERE", glm::vec3(0.0f), shaderScene, brickTextureID, spherePath, 1);
-	SceneObject obj2("LIGHT", glm::vec3(0.0f), lightSourceScene, cementTextureID, cubePath, 0);
-	SceneObject obj3("FLOOR", glm::vec3(0.0f), shaderScene, grassTextureID, planePath, 0);
+	///////////////////////////////////////////////////////////////////////
+	////////
+	////////					 C O N T R O L S
+	////////
+	///////////////////////////////////////////////////////////////////////
+
+	mainCamera.initCameraControls(window);
+
+	///////////////////////////////////////////////////////////////////////
+	////////
+	////////						W O R L D
+	////////
+	///////////////////////////////////////////////////////////////////////
+
+	std::vector<glm::mat4> posVector;
+
+	for (unsigned int i = 0; i < 1000; i++) {
+		posVector.push_back(glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), glm::vec3(rand() % 100 + (-50), -7.0f, -rand() % 10 + (-5))) * glm::scale(glm::mat4(1.0f), glm::vec3(0.3f)));
+	};
+
+	SceneObject cube("CUBE", glm::vec3(0.0f), shaderScene, grassTextureID, cubePath, 0);
+	SceneObject sphere("SPHERE", glm::vec3(0.0f), shaderScene, brickTextureID, spherePath, 1);
+	SceneObject light_cube("LIGHT", glm::vec3(0.0f), lightSourceScene, cementTextureID, cubePath, 0);
+	SceneObject floor_plane("FLOOR", glm::vec3(0.0f), shaderScene, grassTextureID, planePath, 0);
 
     // Entering Main Loop
     while(!glfwWindowShouldClose(window))
     {
         // Frame time calculation
-        float dt = glfwGetTime() - lastFrameTime;
-        lastFrameTime += dt;
+        //float dt = glfwGetTime() - lastFrameTime;
+        //lastFrameTime += dt;
 
         // Each frame, reset color of each pixel to glClearColor
 		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
@@ -351,8 +355,8 @@ int main(int argc, char*argv[])
 
 		viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
 
-		setViewMatrix(shaderScene, viewMatrix);
-		setProjectionMatrix(shaderScene, projectionMatrix);
+		mainCamera.setShaderView(shaderScene, viewMatrix);
+		mainCamera.setShaderProjection(shaderScene, projectionMatrix);
 		
 		///////////////////////////////////////////////////////////////////////
 		////////
@@ -365,79 +369,81 @@ int main(int argc, char*argv[])
 
 		glm::vec3 lightFocus(0.0f);
 
-		glm::mat4 lightProjectionMatrix = glm::frustum(-1.0f, 1.0f, -1.0f, 1.0f, lightNearPlane, lightFarPlane);
-			// glm::perspective(20.0f, (float)DEPTH_MAP_TEXTURE_SIZE / (float)DEPTH_MAP_TEXTURE_SIZE, lightNearPlane, lightFarPlane);
+		glm::mat4 lightProjectionMatrix = // glm::frustum(-1.0f, 1.0f, -1.0f, 1.0f, lightNearPlane, lightFarPlane);
+			glm::perspective(45.0f, (float)DEPTH_MAP_TEXTURE_SIZE / (float)DEPTH_MAP_TEXTURE_SIZE, lightNearPlane, lightFarPlane);
 		glm::mat4 lightViewMatrix = glm::lookAt(lightPos, lightFocus, glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::mat4 lightSpaceMatrix = lightProjectionMatrix * lightViewMatrix;
 
 		glUseProgram(shaderShadow);
 
 		SetUniformMat4(shaderShadow, "lightSpaceMatrix", lightSpaceMatrix);
-		obj.setShader(shaderShadow);
+		//cube.setShader(shaderShadow);
+		floor_plane.setShader(shaderShadow);
 
 		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 			glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 			glClear(GL_DEPTH_BUFFER_BIT);
 
-			glBindVertexArray(obj.getVAO());
-			for (unsigned int i = 0; i < posVector.size(); i++) {
-				SetUniformMat4(shaderShadow, "model", posVector.at(i) * glm::scale(glm::mat4(1.0f), glm::vec3(0.25f)));
-				obj.Draw();
-			}
+			glBindVertexArray(floor_plane.getVAO());
+			SetUniformMat4(shaderShadow, "model", glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)));
+			floor_plane.Draw();
+
+			//for (unsigned int i = 0; i < posVector.size(); i++) {
+			//	SetUniformMat4(shaderShadow, "model", posVector.at(i) * glm::scale(glm::mat4(1.0f), glm::vec3(0.25f)));
+			//	cube.Draw();
+			//}
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// reset viewport
-		glViewport(0, 0, 1024, HEIGHT);
+		glViewport(0, 0, WIDTH, HEIGHT);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glUseProgram(shaderScene);
-
-		SetUniformMat4(shaderScene, "projection", projectionMatrix);
-		SetUniformMat4(shaderScene, "view", viewMatrix);
 
 		SetUniformMat4(shaderScene, "lightSpaceMatrix", lightSpaceMatrix);
 		SetUniformVec3(shaderScene, "lightPos", lightPos);
 		SetUniformVec3(shaderScene, "viewPos", cameraPosition);
 		SetUniformVec3(shaderScene, "lightColor", lightColor);
 
-		obj.setShader(shaderScene);
+		cube.setShader(shaderScene);
 		for (unsigned int i = 0; i < posVector.size(); i++) 
 		{
 			if (i < posVector.size() / 3)
 			{
-				glBindVertexArray(obj.getVAO());
-				obj.setTexture(brickTextureID);
+				glBindVertexArray(cube.getVAO());
+				cube.setTexture(brickTextureID);
 				SetUniformMat4(shaderScene, "model", posVector.at(i) * glm::scale(glm::mat4(1.0f), glm::vec3(0.3f)));
-				obj.Draw();
+				cube.Draw();
 			}
 			else if (i > posVector.size() / 3 && i < (2 * posVector.size()) / 3)
 			{
-				glBindVertexArray(obj.getVAO());
-				obj.setTexture(cementTextureID);
+				glBindVertexArray(cube.getVAO());
+				cube.setTexture(cementTextureID);
 				SetUniformMat4(shaderScene, "model", posVector.at(i) * glm::scale(glm::mat4(1.0f), glm::vec3(0.23f)));
-				obj.Draw();
+				cube.Draw();
 			}
 			else
 			{
-				glBindVertexArray(obj.getVAO());
-				obj.setTexture(grassTextureID);
+				glBindVertexArray(cube.getVAO());
+				cube.setTexture(grassTextureID);
 				SetUniformMat4(shaderScene, "model", posVector.at(i) * glm::scale(glm::mat4(1.0f), glm::vec3(0.28f)));
-				obj.Draw();
+				cube.Draw();
 			}
 		}
 
-		glBindVertexArray(obj1.getVAO());
+		glBindVertexArray(sphere.getVAO());
 		SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f)));
-		obj1.Draw();
+		sphere.Draw();
 
+		glBindVertexArray(light_cube.getVAO());
 		SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f)));
-		glBindVertexArray(obj2.getVAO());
-		obj2.Draw();
+		light_cube.Draw();
 
-		glBindVertexArray(obj3.getVAO());
-		SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(5.0f)));
-		obj3.Draw();
+		floor_plane.setShader(shaderScene);
+		glBindVertexArray(floor_plane.getVAO());
+		SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -10.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(100.0f)));
+		floor_plane.Draw();
 
 		///////////////////////////////////////////////////////////////////////
 		////////
@@ -448,8 +454,10 @@ int main(int argc, char*argv[])
 		glUseProgram(lightSourceScene);
 
 		SetUniformMat4(lightSourceScene, "model", glm::translate(glm::mat4(1.0f), lightPos) * glm::scale(glm::mat4(1.0f), glm::vec3(0.25f)));
-		SetUniformMat4(lightSourceScene, "projection", projectionMatrix);
-		SetUniformMat4(lightSourceScene, "view", viewMatrix);
+
+
+		mainCamera.setShaderView(lightSourceScene, viewMatrix);
+		mainCamera.setShaderProjection(lightSourceScene, projectionMatrix);
 
         // End Frame
         glfwSwapBuffers(window);
@@ -469,16 +477,16 @@ int main(int argc, char*argv[])
         double mousePosX, mousePosY;
         glfwGetCursorPos(window, &mousePosX, &mousePosY);
         
-        double dx = mousePosX - lastMousePosX;
-        double dy = mousePosY - lastMousePosY;
-        
-        lastMousePosX = mousePosX;
-        lastMousePosY = mousePosY;
+        //double dx = mousePosX - lastMousePosX;
+        //double dy = mousePosY - lastMousePosY;
+        //
+        //lastMousePosX = mousePosX;
+        //lastMousePosY = mousePosY;
 
         // Convert to spherical coordinates
-        const float cameraAngularSpeed = 60.0f;
-        cameraHorizontalAngle -= dx * cameraAngularSpeed * dt;
-        cameraVerticalAngle   -= dy * cameraAngularSpeed * dt;
+        //const float cameraAngularSpeed = 60.0f;
+        //cameraHorizontalAngle -= dx * cameraAngularSpeed * dt;
+        //cameraVerticalAngle   -= dy * cameraAngularSpeed * dt;
         
         // Clamp vertical angle to [-85, 85] degrees
         cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, cameraVerticalAngle));
@@ -490,27 +498,28 @@ int main(int argc, char*argv[])
 		glm::vec3 cameraSideVector = glm::cross(cameraLookAt, glm::vec3(0.0f, 1.0f, 0.0f));
         
 		glm::normalize(cameraSideVector);
+
+		mainCamera.playerController(window);
         
-        // Use camera lookat and side vectors to update positions with ASDW
-        if (glfwGetKey(window, GLFW_KEY_W ) == GLFW_PRESS)
-        {
-            cameraPosition += cameraLookAt * dt * currentCameraSpeed;
-        }
-        
-        if (glfwGetKey(window, GLFW_KEY_S ) == GLFW_PRESS)
-        {
-            cameraPosition -= cameraLookAt * dt * currentCameraSpeed;
-        }
-        
-        if (glfwGetKey(window, GLFW_KEY_D ) == GLFW_PRESS)
-        {
-            cameraPosition += cameraSideVector * dt * currentCameraSpeed;
-        }
-        
-        if (glfwGetKey(window, GLFW_KEY_A ) == GLFW_PRESS)
-        {
-            cameraPosition -= cameraSideVector * dt * currentCameraSpeed;
-        }  
+        //if (glfwGetKey(window, GLFW_KEY_W ) == GLFW_PRESS)
+        //{
+        //    cameraPosition += cameraLookAt * dt * currentCameraSpeed;
+        //}
+        //
+        //if (glfwGetKey(window, GLFW_KEY_S ) == GLFW_PRESS)
+        //{
+        //    cameraPosition -= cameraLookAt * dt * currentCameraSpeed;
+        //}
+        //
+        //if (glfwGetKey(window, GLFW_KEY_D ) == GLFW_PRESS)
+        //{
+        //    cameraPosition += cameraSideVector * dt * currentCameraSpeed;
+        //}
+        //
+        //if (glfwGetKey(window, GLFW_KEY_A ) == GLFW_PRESS)
+        //{
+        //    cameraPosition -= cameraSideVector * dt * currentCameraSpeed;
+        //}  
 
 		if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)
 		{

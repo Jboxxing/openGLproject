@@ -31,6 +31,7 @@ private:
 
 	void initVBO(std::string path);
 	void initEBO(std::string path);
+
 public:
 	SceneObject();
 	SceneObject(std::string _name, glm::vec3 _position, GLuint _shader, GLuint _texture, std::string _objectPath, unsigned int _bufferType);

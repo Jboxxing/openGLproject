@@ -1,45 +1,6 @@
-﻿  SceneObject.cpp
-C:\dev\openGLproject\Lab_Framework\Source\OBJloader.h(20,1): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(208): message : see declaration of 'fopen'
-C:\dev\openGLproject\Lab_Framework\Source\OBJloader.h(31,1): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(1197): message : see declaration of 'fscanf'
-C:\dev\openGLproject\Lab_Framework\Source\OBJloader.h(39,1): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(1197): message : see declaration of 'fscanf'
-C:\dev\openGLproject\Lab_Framework\Source\OBJloader.h(44,1): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(1197): message : see declaration of 'fscanf'
-C:\dev\openGLproject\Lab_Framework\Source\OBJloader.h(50,1): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(1197): message : see declaration of 'fscanf'
-C:\dev\openGLproject\Lab_Framework\Source\OBJloader.h(60,1): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(2263): message : see declaration of 'sscanf'
-C:\dev\openGLproject\Lab_Framework\Source\OBJloader.h(63,1): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(2263): message : see declaration of 'sscanf'
-C:\dev\openGLproject\Lab_Framework\Source\OBJloader.h(66,1): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(2263): message : see declaration of 'sscanf'
-C:\dev\openGLproject\Lab_Framework\Source\OBJloader.h(69,1): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(2263): message : see declaration of 'sscanf'
-C:\dev\openGLproject\Lab_Framework\Source\OBJloaderV2.h(20,1): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(208): message : see declaration of 'fopen'
-C:\dev\openGLproject\Lab_Framework\Source\OBJloaderV2.h(31,1): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(1197): message : see declaration of 'fscanf'
-C:\dev\openGLproject\Lab_Framework\Source\OBJloaderV2.h(39,1): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(1197): message : see declaration of 'fscanf'
-C:\dev\openGLproject\Lab_Framework\Source\OBJloaderV2.h(45,1): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(1197): message : see declaration of 'fscanf'
-C:\dev\openGLproject\Lab_Framework\Source\OBJloaderV2.h(54,1): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(1197): message : see declaration of 'fscanf'
-C:\dev\openGLproject\Lab_Framework\Source\OBJloaderV2.h(72,1): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(2263): message : see declaration of 'sscanf'
-C:\dev\openGLproject\Lab_Framework\Source\OBJloaderV2.h(75,1): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(2263): message : see declaration of 'sscanf'
-C:\dev\openGLproject\Lab_Framework\Source\OBJloaderV2.h(78,1): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(2263): message : see declaration of 'sscanf'
-C:\dev\openGLproject\Lab_Framework\Source\OBJloaderV2.h(81,1): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  lab06.cpp
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(2263): message : see declaration of 'sscanf'
-C:\dev\openGLproject\Lab_Framework\Source\shaderloader.h(25,10): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'std::string'
-C:\dev\openGLproject\Lab_Framework\Source\lab06.cpp(284,25): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\dev\openGLproject\Lab_Framework\Source\lab06.cpp(342,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\dev\openGLproject\Lab_Framework\Source\lab06.cpp(480,62): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
-  Generating Code...
-C:\dev\openGLproject\Lab_Framework\Source\lab06.cpp(481,62): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+﻿  CameraControl.cpp
+C:\dev\openGLproject\Lab_Framework\Source\CameraControl.cpp(65,35): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\dev\openGLproject\Lab_Framework\Source\CameraControl.cpp(86,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\dev\openGLproject\Lab_Framework\Source\CameraControl.cpp(101,67): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+C:\dev\openGLproject\Lab_Framework\Source\CameraControl.cpp(102,65): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
   Labs.vcxproj -> C:\dev\openGLproject\Lab_Framework\VS2017\/../Bin/Labs-Debug.exe

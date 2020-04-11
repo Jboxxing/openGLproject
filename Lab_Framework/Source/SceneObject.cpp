@@ -101,10 +101,13 @@ void SceneObject::initEBO(std::string path)
 
 SceneObject::SceneObject()
 {
-	this->objectName = "NaN";
-	this->position   = glm::vec3(0.0f);
-	this->shader     = 0;
-	this->texture    = 0;
+	std::cout << "Default object initialized." << std::endl;
+	this->objectName  = "NaN";
+	this->position    = glm::vec3(0.0f);
+	this->shader      = 0;
+	this->texture     = 0;
+	this->VAO         = 0;
+	this->vertexCount = 0;
 }
 
 SceneObject::SceneObject(std::string _name, glm::vec3 _position, GLuint _shader, GLuint _texture, std::string _objectPath, unsigned int _bufferType)
@@ -114,6 +117,12 @@ SceneObject::SceneObject(std::string _name, glm::vec3 _position, GLuint _shader,
 		this->initVBO(_objectPath);
 	else if (_bufferType == 1)
 		this->initEBO(_objectPath);
+	else
+	{
+		std::cout << "VAO not generated. Setting to 0." << std::endl;
+		this->VAO = 0;
+		this->vertexCount = 0;
+	}
 }
 
 SceneObject::~SceneObject()
