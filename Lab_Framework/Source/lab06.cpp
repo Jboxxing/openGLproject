@@ -249,7 +249,7 @@ int main(int argc, char*argv[])
 	GLuint grassTextureID  = loadTexture(grassTexture);
 
     // Camera parameters for view transform
-	glm::vec3 cameraPosition(0.0f, 1.0f, 10.0f);
+	glm::vec3 cameraPosition(0.0f, 1.0f, 20.0f);
 	glm::vec3 cameraLookAt(0.0f, 0.0f, -1.0f);
 	glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
     
@@ -270,11 +270,8 @@ int main(int argc, char*argv[])
                              cameraUp);                     // up
 
 	CameraControl mainCamera(shaderScene, viewMatrix, projectionMatrix);
-
-    //float lastFrameTime = glfwGetTime();
-    //int lastMouseLeftState = GLFW_RELEASE;
-    //double lastMousePosX, lastMousePosY;
-    //glfwGetCursorPos(window, &lastMousePosX, &lastMousePosY);
+	mainCamera.setCameraLookAt(cameraLookAt);
+	mainCamera.setCameraPosition(cameraPosition);
 
     // Other OpenGL states to set once
     glEnable(GL_DEPTH_TEST);
@@ -312,13 +309,15 @@ int main(int argc, char*argv[])
 
 	// lighting
 	glm::vec3 lightPos(30.0f, 10.0f, -5.0f);
-	glm::vec3 lightColor(0.7f, 0.6f, 0.2f);
+	glm::vec3 lightColor(0.2f, 0.6f, 0.2f);
 
 	///////////////////////////////////////////////////////////////////////
 	////////
 	////////					 C O N T R O L S
 	////////
 	///////////////////////////////////////////////////////////////////////
+
+	glm::mat4 modelWorldMatrix(1.0f);
 
 	mainCamera.initCameraControls(window);
 
@@ -331,7 +330,7 @@ int main(int argc, char*argv[])
 	std::vector<glm::mat4> posVector;
 
 	for (unsigned int i = 0; i < 1000; i++) {
-		posVector.push_back(glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), glm::vec3(rand() % 100 + (-50), -7.0f, -rand() % 10 + (-5))) * glm::scale(glm::mat4(1.0f), glm::vec3(0.3f)));
+		posVector.push_back(glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), glm::vec3(rand() % 100 + (-50), -7.0f, -rand() % 10 + (-5))) * glm::scale(glm::mat4(1.0f), glm::vec3(1.5f)));
 	};
 
 	SceneObject cube("CUBE", glm::vec3(0.0f), shaderScene, grassTextureID, cubePath, 0);
@@ -342,20 +341,11 @@ int main(int argc, char*argv[])
     // Entering Main Loop
     while(!glfwWindowShouldClose(window))
     {
-        // Frame time calculation
-        //float dt = glfwGetTime() - lastFrameTime;
-        //lastFrameTime += dt;
-
         // Each frame, reset color of each pixel to glClearColor
 		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glm::mat4 modelWorldMatrix(1.0f);
-		glm::mat4 viewMatrix(1.0f);
-
-		viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
-
-		mainCamera.setShaderView(shaderScene, viewMatrix);
+		mainCamera.playerController(window, shaderScene, viewMatrix, cameraPosition, cameraLookAt);
 		mainCamera.setShaderProjection(shaderScene, projectionMatrix);
 		
 		///////////////////////////////////////////////////////////////////////
@@ -454,9 +444,8 @@ int main(int argc, char*argv[])
 		glUseProgram(lightSourceScene);
 
 		SetUniformMat4(lightSourceScene, "model", glm::translate(glm::mat4(1.0f), lightPos) * glm::scale(glm::mat4(1.0f), glm::vec3(0.25f)));
-
-
-		mainCamera.setShaderView(lightSourceScene, viewMatrix);
+		
+		mainCamera.setShaderView(lightSourceScene, mainCamera.getViewMatrix());
 		mainCamera.setShaderProjection(lightSourceScene, projectionMatrix);
 
         // End Frame
@@ -466,60 +455,6 @@ int main(int argc, char*argv[])
         // Handle inputs
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 			glfwSetWindowShouldClose(window, true);
-        
-        // This was solution for Lab02 - Moving camera exercise
-        // We'll change this to be a first or third person camera
-        bool fastCam = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
-        float currentCameraSpeed = (fastCam) ? cameraFastSpeed : cameraSpeed;
-        
-        // - Calculate mouse motion dx and dy
-        // - Update camera horizontal and vertical angle
-        double mousePosX, mousePosY;
-        glfwGetCursorPos(window, &mousePosX, &mousePosY);
-        
-        //double dx = mousePosX - lastMousePosX;
-        //double dy = mousePosY - lastMousePosY;
-        //
-        //lastMousePosX = mousePosX;
-        //lastMousePosY = mousePosY;
-
-        // Convert to spherical coordinates
-        //const float cameraAngularSpeed = 60.0f;
-        //cameraHorizontalAngle -= dx * cameraAngularSpeed * dt;
-        //cameraVerticalAngle   -= dy * cameraAngularSpeed * dt;
-        
-        // Clamp vertical angle to [-85, 85] degrees
-        cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, cameraVerticalAngle));
-        
-        float theta = glm::radians(cameraHorizontalAngle);
-        float phi = glm::radians(cameraVerticalAngle);
-        
-        cameraLookAt = glm::vec3(cosf(phi)*cosf(theta), sinf(phi), -cosf(phi)*sinf(theta));
-		glm::vec3 cameraSideVector = glm::cross(cameraLookAt, glm::vec3(0.0f, 1.0f, 0.0f));
-        
-		glm::normalize(cameraSideVector);
-
-		mainCamera.playerController(window);
-        
-        //if (glfwGetKey(window, GLFW_KEY_W ) == GLFW_PRESS)
-        //{
-        //    cameraPosition += cameraLookAt * dt * currentCameraSpeed;
-        //}
-        //
-        //if (glfwGetKey(window, GLFW_KEY_S ) == GLFW_PRESS)
-        //{
-        //    cameraPosition -= cameraLookAt * dt * currentCameraSpeed;
-        //}
-        //
-        //if (glfwGetKey(window, GLFW_KEY_D ) == GLFW_PRESS)
-        //{
-        //    cameraPosition += cameraSideVector * dt * currentCameraSpeed;
-        //}
-        //
-        //if (glfwGetKey(window, GLFW_KEY_A ) == GLFW_PRESS)
-        //{
-        //    cameraPosition -= cameraSideVector * dt * currentCameraSpeed;
-        //}  
 
 		if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)
 		{

@@ -36,6 +36,11 @@ void CameraControl::setViewMatrix(glm::mat4 _viewMat)
 	this->viewMatrix = _viewMat;
 }
 
+glm::mat4 CameraControl::getViewMatrix() const
+{
+	return this->viewMatrix;
+}
+
 void CameraControl::setProjectionMatrix(glm::mat4 _projMat)
 {
 	this->projectionMatrix = _projMat;
@@ -55,19 +60,6 @@ void CameraControl::setShaderProjection(GLuint _shaderProgram, glm::mat4 _projec
 	glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &_projectionMatrix[0][0]);
 }
 
-void CameraControl::initCameraControls(GLFWwindow* _window)
-{
-	this->lastMouseLeftState = GLFW_RELEASE;
-	this->cameraVerticalAngle = 0.0f;
-	this->cameraHorizontalAngle = 90.0f;
-	this->cameraSpeed = 5.0f;
-	this->cameraFastSpeed = this->cameraSpeed * 2;
-	this->lastFrameTime = glfwGetTime();
-
-	glfwGetCursorPos(_window, &this->mousePosX, &this->mousePosY);
-	glfwGetCursorPos(_window, &this->lastMousePosX, &this->lastMousePosY);
-}
-
 void CameraControl::setCameraPosition(glm::vec3 _position)
 {
 	this->cameraPositon = _position;
@@ -78,9 +70,24 @@ void CameraControl::setCameraLookAt(glm::vec3 _lookAt)
 	this->cameraLookAt = _lookAt;
 }
 
-void CameraControl::playerController(GLFWwindow* _window)
+void CameraControl::initCameraControls(GLFWwindow* _window)
+{
+	this->lastMouseLeftState = GLFW_RELEASE;
+	this->cameraVerticalAngle = 0.0f;
+	this->cameraHorizontalAngle = 90.0f;
+	this->cameraSpeed = 5.0f;
+	this->cameraFastSpeed = this->cameraSpeed * 2;
+	this->lastFrameTime = glfwGetTime();
+
+	glfwGetCursorPos(_window, &this->lastMousePosX, &this->lastMousePosY);
+}
+
+void CameraControl::playerController(GLFWwindow* _window, GLuint _shader, glm::mat4 _viewMatrix, glm::vec3 _pos, glm::vec3 _look)
 {   
-	int lastMouseLeftState = GLFW_RELEASE;
+	this->setViewMatrix(glm::lookAt(this->cameraPositon, this->cameraPositon + this->cameraLookAt, this->cameraUp));
+	this->setShaderView(_shader, this->getViewMatrix());
+
+	glfwGetCursorPos(_window, &this->mousePosX, &this->mousePosY);
 
 	// Frame time calculation
 	float dt = glfwGetTime() - this->lastFrameTime;
@@ -94,8 +101,6 @@ void CameraControl::playerController(GLFWwindow* _window)
 	this->lastFrameTime += dt;
 	this->lastMousePosX = this->mousePosX;
 	this->lastMousePosY  = this->mousePosY;
-
-	std::cout << currentCameraSpeed << std::endl;
 
 	// Convert to spherical coordinates
 	this->cameraHorizontalAngle -= dx * this->cameraAngularSpeed * dt;
@@ -111,11 +116,8 @@ void CameraControl::playerController(GLFWwindow* _window)
 	glm::vec3 cameraSideVector = glm::cross(this->cameraLookAt, glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::normalize(cameraSideVector);
 
-	this->setShaderView(this->shaderProgram, glm::lookAt(this->cameraPositon, this->cameraPositon + this->cameraLookAt, this->cameraUp));
-
 	if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS)
 	{
-		//std::cout << this->cameraPositon.z << std::endl;
 		this->cameraPositon += this->cameraLookAt * dt * currentCameraSpeed;
 	}
 
@@ -136,8 +138,3 @@ void CameraControl::playerController(GLFWwindow* _window)
 
 
 }
-
-//struct controlVariables
-//{
-//
-//} cVars;

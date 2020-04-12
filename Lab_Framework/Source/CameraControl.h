@@ -33,7 +33,7 @@ private:
 
 public:
 
-	const float cameraAngularSpeed = 60.0f;
+	const float cameraAngularSpeed = 40.0f;
 
 	float cameraVerticalAngle;
 	float cameraHorizontalAngle = 90.0f;
@@ -59,10 +59,11 @@ public:
 	void setCameraLookAt(glm::vec3 _lookAt);
 
 	void setViewMatrix(glm::mat4 _viewMat);
+	glm::mat4 getViewMatrix() const;
 	void setProjectionMatrix(glm::mat4 _projMat);
 
 	void setShaderView(GLuint _shaderProgram, glm::mat4 _viewMatrix);
 	void setShaderProjection(GLuint _shaderProgram, glm::mat4 _projectionMatrix);
 
-	void playerController(GLFWwindow * _window);
+	void playerController(GLFWwindow * _window, GLuint _shader, glm::mat4 _viewMatrix, glm::vec3 _pos, glm::vec3 _look);
 };

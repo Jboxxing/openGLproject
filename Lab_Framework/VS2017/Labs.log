@@ -1,6 +1,11 @@
 ﻿  CameraControl.cpp
-C:\dev\openGLproject\Lab_Framework\Source\CameraControl.cpp(65,35): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\dev\openGLproject\Lab_Framework\Source\CameraControl.cpp(86,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\dev\openGLproject\Lab_Framework\Source\CameraControl.cpp(101,67): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
-C:\dev\openGLproject\Lab_Framework\Source\CameraControl.cpp(102,65): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+c:\dev\openglproject\lab_framework\source\cameracontrol.cpp(80): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\dev\openglproject\lab_framework\source\cameracontrol.cpp(93): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\dev\openglproject\lab_framework\source\cameracontrol.cpp(106): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+c:\dev\openglproject\lab_framework\source\cameracontrol.cpp(107): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+  lab06.cpp
+c:\dev\openglproject\lab_framework\source\shaderloader.h(25): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'std::string'
+c:\dev\openglproject\lab_framework\source\lab06.cpp(201): warning C4244: 'argument': conversion from 'const float' to 'int', possible loss of data
+c:\dev\openglproject\lab_framework\source\lab06.cpp(389): warning C4244: 'argument': conversion from 'const float' to 'GLsizei', possible loss of data
+  Generating Code...
   Labs.vcxproj -> C:\dev\openGLproject\Lab_Framework\VS2017\/../Bin/Labs-Debug.exe
