@@ -151,6 +151,11 @@ glm::vec3 SceneObject::getPosition() const
 	return this->position;
 }
 
+void SceneObject::setPosition(glm::vec3 _position)
+{
+	this->position = _position;
+}
+
 GLuint SceneObject::getVAO() const
 {
 	return this->VAO;

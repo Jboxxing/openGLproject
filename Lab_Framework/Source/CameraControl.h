@@ -33,7 +33,7 @@ private:
 
 public:
 
-	const float cameraAngularSpeed = 40.0f;
+	const float cameraAngularSpeed = 5.0f;
 
 	float cameraVerticalAngle;
 	float cameraHorizontalAngle = 90.0f;
@@ -53,6 +53,8 @@ public:
 	CameraControl(GLuint _shaderProgram, glm::mat4 _projectionMatrix, glm::vec3 _cameraPositon, glm::vec3 _cameraLookAt);
 	~CameraControl();
 
+	glm::vec3 getCameraPosition() const;
+
 	void initCameraControls(GLFWwindow* _window);
 
 	void setCameraPosition(glm::vec3 _position);
@@ -60,6 +62,7 @@ public:
 
 	void setViewMatrix(glm::mat4 _viewMat);
 	glm::mat4 getViewMatrix() const;
+
 	void setProjectionMatrix(glm::mat4 _projMat);
 
 	void setShaderView(GLuint _shaderProgram, glm::mat4 _viewMatrix);

@@ -31,6 +31,11 @@ CameraControl::~CameraControl()
 {
 }
 
+glm::vec3 CameraControl::getCameraPosition() const
+{
+	return this->cameraPositon;
+}
+
 void CameraControl::setViewMatrix(glm::mat4 _viewMat)
 {
 	this->viewMatrix = _viewMat;
@@ -75,7 +80,7 @@ void CameraControl::initCameraControls(GLFWwindow* _window)
 	this->lastMouseLeftState = GLFW_RELEASE;
 	this->cameraVerticalAngle = 0.0f;
 	this->cameraHorizontalAngle = 90.0f;
-	this->cameraSpeed = 5.0f;
+	this->cameraSpeed = 8.0f;
 	this->cameraFastSpeed = this->cameraSpeed * 2;
 	this->lastFrameTime = glfwGetTime();
 
@@ -89,11 +94,10 @@ void CameraControl::playerController(GLFWwindow* _window, GLuint _shader, glm::m
 
 	glfwGetCursorPos(_window, &this->mousePosX, &this->mousePosY);
 
-	// Frame time calculation
 	float dt = glfwGetTime() - this->lastFrameTime;
 
 	bool fastCam = glfwGetKey(_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(_window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
-	float currentCameraSpeed = (fastCam) ? this->cameraFastSpeed : this->cameraSpeed;
+		float currentCameraSpeed = (fastCam) ? this->cameraFastSpeed : this->cameraSpeed;
 
 	double dx = this->mousePosX - this->lastMousePosX;
 	double dy = this->mousePosY - this->lastMousePosY;
@@ -102,11 +106,9 @@ void CameraControl::playerController(GLFWwindow* _window, GLuint _shader, glm::m
 	this->lastMousePosX = this->mousePosX;
 	this->lastMousePosY  = this->mousePosY;
 
-	// Convert to spherical coordinates
 	this->cameraHorizontalAngle -= dx * this->cameraAngularSpeed * dt;
 	this->cameraVerticalAngle -= dy * this->cameraAngularSpeed * dt;
 
-	// Clamp vertical angle to [-85, 85] degrees
 	this->cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, this->cameraVerticalAngle));
 
 	float theta = glm::radians(this->cameraHorizontalAngle);

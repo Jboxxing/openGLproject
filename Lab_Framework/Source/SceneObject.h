@@ -40,6 +40,7 @@ public:
 	void Draw();
 
 	glm::vec3 getPosition() const;
+	void setPosition(glm::vec3 _position);
 
 	GLuint getVAO() const;
 

@@ -1,4 +1,5 @@
-
+#include <cstdlib>
+#include <ctime>
 #include <iostream>
 #include <algorithm>
 #include <vector>
@@ -21,8 +22,6 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-
-using namespace std;
 
 GLuint loadTexture(const char* filename)
 {
@@ -63,25 +62,24 @@ GLuint loadTexture(const char* filename)
 	return textureId;
 }
 
-//void setProjectionMatrix(int shaderProgram, glm::mat4 projectionMatrix)
-//{
-//    glUseProgram(shaderProgram);
-//    GLuint projectionMatrixLocation = glGetUniformLocation(shaderProgram, "projection");
-//    glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
-//}
-//
-//void setViewMatrix(int shaderProgram, glm::mat4 viewMatrix)
-//{
-//    glUseProgram(shaderProgram);
-//    GLuint viewMatrixLocation = glGetUniformLocation(shaderProgram, "view");
-//    glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
-//}
-
-void setWorldMatrix(int shaderProgram, glm::mat4 worldMatrix)
+void SetUniformMat4(GLuint shader_id, const char* uniform_name, glm::mat4 uniform_value)
 {
-	glUseProgram(shaderProgram);
-	GLuint worldMatrixLocation = glGetUniformLocation(shaderProgram, "worldMatrix");
-	glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &worldMatrix[0][0]);
+	glUseProgram(shader_id);
+	glUniformMatrix4fv(glGetUniformLocation(shader_id, uniform_name), 1, GL_FALSE, &uniform_value[0][0]);
+}
+
+void SetUniformVec3(GLuint shader_id, const char* uniform_name, glm::vec3 uniform_value)
+{
+	glUseProgram(shader_id);
+	glUniform3fv(glGetUniformLocation(shader_id, uniform_name), 1, value_ptr(uniform_value));
+}
+
+template <class T>
+void SetUniform1Value(GLuint shader_id, const char* uniform_name, T uniform_value)
+{
+	glUseProgram(shader_id);
+	glUniform1i(glGetUniformLocation(shader_id, uniform_name), uniform_value);
+	glUseProgram(0);
 }
 
 GLuint setUpModelInstanceEBO(string path, int& vertexCount) {
@@ -159,26 +157,6 @@ GLuint setUpModelInstanceEBO(string path, int& vertexCount) {
 	return VAO;
 }
 
-void SetUniformMat4(GLuint shader_id, const char* uniform_name, glm::mat4 uniform_value)
-{
-	glUseProgram(shader_id);
-	glUniformMatrix4fv(glGetUniformLocation(shader_id, uniform_name), 1, GL_FALSE, &uniform_value[0][0]);
-}
-
-void SetUniformVec3(GLuint shader_id, const char* uniform_name, glm::vec3 uniform_value)
-{
-	glUseProgram(shader_id);
-	glUniform3fv(glGetUniformLocation(shader_id, uniform_name), 1, value_ptr(uniform_value));
-}
-
-template <class T>
-void SetUniform1Value(GLuint shader_id, const char* uniform_name, T uniform_value)
-{
-	glUseProgram(shader_id);
-	glUniform1i(glGetUniformLocation(shader_id, uniform_name), uniform_value);
-	glUseProgram(0);
-}
-
 int main(int argc, char*argv[])
 {
     // Initialize GLFW and OpenGL version
@@ -232,46 +210,52 @@ int main(int argc, char*argv[])
 	string cubePath = "../Assets/Models/cube.obj";
 	string spherePath = "../Assets/Models/uvSphere.obj";
 	string planePath = "../Assets/Models/plane.obj";
+	string joePath = "../Assets/Models/heracles.obj";
 
 	string shaderPathPrefix = "../Assets/Shaders/";
 
 	char* brickTexture  = "../Assets/Textures/brick.jpg";
 	char* cementTexture = "../Assets/Textures/cement.jpg";
 	char* grassTexture = "../Assets/Textures/grass.jpg";
+	char* treeBarkTexture = "../Assets/Textures/treeBark.png";
 #endif
 
 	GLuint shaderScene      = loadSHADER(shaderPathPrefix + "sceneVertex.glsl", shaderPathPrefix + "sceneFragment.glsl");
 	GLuint lightSourceScene = loadSHADER(shaderPathPrefix + "lightObjectVertex.glsl", shaderPathPrefix + "lightObjectFragment.glsl");
 	GLuint shaderShadow     = loadSHADER(shaderPathPrefix + "shadow_vertex.glsl", shaderPathPrefix + "shadow_fragment.glsl");
 
-	GLuint brickTextureID  = loadTexture(brickTexture);
-	GLuint cementTextureID = loadTexture(cementTexture);
-	GLuint grassTextureID  = loadTexture(grassTexture);
+	GLuint brickTextureID    = loadTexture(brickTexture);
+	GLuint cementTextureID   = loadTexture(cementTexture);
+	GLuint grassTextureID    = loadTexture(grassTexture);
+	GLuint treeBarkTextureID = loadTexture(treeBarkTexture);
+    
+	const float DEPTH_MAP_TEXTURE_SIZE = 1024;
 
-    // Camera parameters for view transform
-	glm::vec3 cameraPosition(0.0f, 1.0f, 20.0f);
+	// Camera parameters for view transform
+	glm::vec3 cameraPosition(0.0f, 2.0f, 20.0f);
 	glm::vec3 cameraLookAt(0.0f, 0.0f, -1.0f);
 	glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
-    
-    // Other camera parameters
-    float cameraSpeed = 5.0f;
-    float cameraFastSpeed = 2 * cameraSpeed;
-    float cameraHorizontalAngle = 90.0f;
-    float cameraVerticalAngle = 0.0f;
 
-	const float DEPTH_MAP_TEXTURE_SIZE = 1024;
-    
-	glm::mat4 projectionMatrix = glm::perspective(70.0f,            // field of view in degrees
-                                             WIDTH / HEIGHT,  // aspect ratio
-                                             0.01f, 300.0f);   // near and far (near > 0)
-    
-	glm::mat4 viewMatrix = glm::lookAt(cameraPosition,           // eye
-                             cameraPosition + cameraLookAt, // center
-                             cameraUp);                     // up
+	glm::mat4 viewMatrix = glm::lookAt(cameraPosition,
+										cameraPosition + cameraLookAt,
+										cameraUp);
+
+	glm::mat4 projectionMatrix = glm::perspective(70.0f,
+		WIDTH / HEIGHT,
+		0.01f, 300.0f);
+
+	///////////////////////////////////////////////////////////////////////
+	////////
+	////////				C A M E R A  C O N T R O L S
+	////////
+	///////////////////////////////////////////////////////////////////////
 
 	CameraControl mainCamera(shaderScene, viewMatrix, projectionMatrix);
+
 	mainCamera.setCameraLookAt(cameraLookAt);
 	mainCamera.setCameraPosition(cameraPosition);
+
+	mainCamera.initCameraControls(window);
 
     // Other OpenGL states to set once
     glEnable(GL_DEPTH_TEST);
@@ -308,35 +292,49 @@ int main(int argc, char*argv[])
 	SetUniform1Value(shaderScene, "shadow_map", 1);
 
 	// lighting
-	glm::vec3 lightPos(30.0f, 10.0f, -5.0f);
-	glm::vec3 lightColor(0.2f, 0.6f, 0.2f);
+	//glm::vec3 lightPos(15.0f, 10.0f, -5.0f);
+	glm::vec3 lightColor(1.0f);
 
 	///////////////////////////////////////////////////////////////////////
 	////////
-	////////					 C O N T R O L S
+	////////				W O R L D  G E N E R A T I O N
 	////////
 	///////////////////////////////////////////////////////////////////////
 
-	glm::mat4 modelWorldMatrix(1.0f);
+	std::vector<glm::vec3> objectPosVector;
+	std::vector<glm::vec3> floorPosVector;
 
-	mainCamera.initCameraControls(window);
+	glm::mat4 playerPosition = glm::translate(glm::mat4(1.0f), mainCamera.getCameraPosition());
+	glm::vec3 lastPos;
 
-	///////////////////////////////////////////////////////////////////////
-	////////
-	////////						W O R L D
-	////////
-	///////////////////////////////////////////////////////////////////////
+	srand((unsigned)time(0));
 
-	std::vector<glm::mat4> posVector;
+	for (unsigned int i = 0; i < 500; i++) {
+		lastPos = glm::vec3(rand() % 200 + (-100), 0.0f, rand() % 100 + (-50));
+		objectPosVector.push_back(lastPos);
+	}
 
-	for (unsigned int i = 0; i < 1000; i++) {
-		posVector.push_back(glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), glm::vec3(rand() % 100 + (-50), -7.0f, -rand() % 10 + (-5))) * glm::scale(glm::mat4(1.0f), glm::vec3(1.5f)));
-	};
+	for (int i = -2; i < 3; i++) {
+		for (int j = -2; j < 3; j++) {
+			lastPos = glm::vec3(j * 50, -3.0f, i * 50);
+			floorPosVector.push_back(lastPos);
+		}
+	}
 
+	SceneObject treeTrunkCube("CUBE", glm::vec3(0.0f), shaderScene, treeBarkTextureID, cubePath, 0);
 	SceneObject cube("CUBE", glm::vec3(0.0f), shaderScene, grassTextureID, cubePath, 0);
-	SceneObject sphere("SPHERE", glm::vec3(0.0f), shaderScene, brickTextureID, spherePath, 1);
+	SceneObject sphere("SPHERE", glm::vec3(0.0f), shaderScene, brickTextureID, spherePath, 0);
 	SceneObject light_cube("LIGHT", glm::vec3(0.0f), lightSourceScene, cementTextureID, cubePath, 0);
-	SceneObject floor_plane("FLOOR", glm::vec3(0.0f), shaderScene, grassTextureID, planePath, 0);
+	SceneObject floor_plane("FLOOR", glm::vec3(0.0f, -3.0f, 0.0f), shaderScene, grassTextureID, planePath, 0);
+	//SceneObject joe_blo("FLOOR", glm::vec3(0.0f), shaderScene, grassTextureID, joePath, 0);
+
+	glm::vec3 furthestF = floorPosVector.at(2);
+	float d_front = 150;
+	int f_pos = 2;
+
+	glm::vec3 furthestB = floorPosVector.at(22);
+	float d_back = 150;
+	int b_pos = 22;
 
     // Entering Main Loop
     while(!glfwWindowShouldClose(window))
@@ -347,7 +345,10 @@ int main(int argc, char*argv[])
 
 		mainCamera.playerController(window, shaderScene, viewMatrix, cameraPosition, cameraLookAt);
 		mainCamera.setShaderProjection(shaderScene, projectionMatrix);
-		
+
+		// Light Position stays above the player by 10 units as they move
+		glm::vec3 lightPos(mainCamera.getCameraPosition() + glm::vec3(0.0f, 10.0f, 0.0f));
+
 		///////////////////////////////////////////////////////////////////////
 		////////
 		////////						MAIN WORLD SHADER
@@ -378,11 +379,6 @@ int main(int argc, char*argv[])
 			SetUniformMat4(shaderShadow, "model", glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)));
 			floor_plane.Draw();
 
-			//for (unsigned int i = 0; i < posVector.size(); i++) {
-			//	SetUniformMat4(shaderShadow, "model", posVector.at(i) * glm::scale(glm::mat4(1.0f), glm::vec3(0.25f)));
-			//	cube.Draw();
-			//}
-
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// reset viewport
@@ -396,29 +392,31 @@ int main(int argc, char*argv[])
 		SetUniformVec3(shaderScene, "viewPos", cameraPosition);
 		SetUniformVec3(shaderScene, "lightColor", lightColor);
 
-		cube.setShader(shaderScene);
-		for (unsigned int i = 0; i < posVector.size(); i++) 
+		glm::mat4 newTran = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f));
+
+		treeTrunkCube.setShader(shaderScene);
+		for (unsigned int i = 0; i < objectPosVector.size(); i++)
 		{
-			if (i < posVector.size() / 3)
+			float x = rand() % 200 + (-100);
+			float z = (rand() % 150) + 50;
+
+			if (glm::distance(objectPosVector.at(i), mainCamera.getCameraPosition()) > 100)
 			{
-				glBindVertexArray(cube.getVAO());
-				cube.setTexture(brickTextureID);
-				SetUniformMat4(shaderScene, "model", posVector.at(i) * glm::scale(glm::mat4(1.0f), glm::vec3(0.3f)));
-				cube.Draw();
+				objectPosVector.at(i) = glm::vec3(mainCamera.getCameraPosition().x + x, 0.0f, mainCamera.getCameraPosition().z - z);
 			}
-			else if (i > posVector.size() / 3 && i < (2 * posVector.size()) / 3)
+			else 
 			{
-				glBindVertexArray(cube.getVAO());
-				cube.setTexture(cementTextureID);
-				SetUniformMat4(shaderScene, "model", posVector.at(i) * glm::scale(glm::mat4(1.0f), glm::vec3(0.23f)));
-				cube.Draw();
-			}
-			else
-			{
-				glBindVertexArray(cube.getVAO());
-				cube.setTexture(grassTextureID);
-				SetUniformMat4(shaderScene, "model", posVector.at(i) * glm::scale(glm::mat4(1.0f), glm::vec3(0.28f)));
-				cube.Draw();
+				glBindVertexArray(treeTrunkCube.getVAO());
+				treeTrunkCube.setTexture(treeBarkTextureID);
+				SetUniformMat4(shaderScene, "model", glm::translate(glm::mat4(1.0f), objectPosVector.at(i)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.4f, 3.0f, 0.4f)));
+				treeTrunkCube.Draw();
+
+				glBindVertexArray(treeTrunkCube.getVAO());
+				treeTrunkCube.setTexture(grassTextureID);
+				SetUniformMat4(shaderScene, "model", glm::translate(glm::mat4(1.0f), objectPosVector.at(i)) * glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(1.2f)));
+				treeTrunkCube.Draw();
+
+				newTran = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f));
 			}
 		}
 
@@ -430,10 +428,43 @@ int main(int argc, char*argv[])
 		SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f)));
 		light_cube.Draw();
 
-		floor_plane.setShader(shaderScene);
-		glBindVertexArray(floor_plane.getVAO());
-		SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -10.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(100.0f)));
-		floor_plane.Draw();
+		for (int i = 0; i < floorPosVector.size(); i++)
+		{
+			floor_plane.setShader(shaderScene);
+			glBindVertexArray(floor_plane.getVAO());
+			SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), floorPosVector.at(i)) * glm::scale(glm::mat4(1.0f), glm::vec3(50.0f)));
+			floor_plane.Draw();
+		}
+
+		if (glm::distance(mainCamera.getCameraPosition(), furthestB) > d_back)
+		{
+			floorPosVector.at(b_pos).z = floorPosVector.at(f_pos).z - 50;
+			f_pos = b_pos;
+			b_pos -= 5;
+			if (b_pos < 0)
+				b_pos = 22;
+			furthestB = floorPosVector.at(b_pos);
+		}
+
+		if (glm::distance(mainCamera.getCameraPosition(), furthestF) > d_front)
+		{
+			floorPosVector.at(f_pos).z = floorPosVector.at(b_pos).z + 50;
+			b_pos = f_pos;
+			f_pos += 5;
+			if (f_pos > 22)
+				b_pos = 2;
+			furthestF = floorPosVector.at(f_pos);
+		}
+
+		//std::cout << mainCamera.getCameraPosition().x << std::endl;
+		std::cout << b_pos << std::endl;
+		std::cout << floorPosVector.at(b_pos).z << std::endl;
+		std::cout << floorPosVector.at(f_pos).z << std::endl;
+		
+		//joe_blo.setShader(shaderScene);
+		//glBindVertexArray(joe_blo.getVAO());
+		//SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, -5.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f)));
+		//joe_blo.Draw();
 
 		///////////////////////////////////////////////////////////////////////
 		////////
@@ -444,7 +475,8 @@ int main(int argc, char*argv[])
 		glUseProgram(lightSourceScene);
 
 		SetUniformMat4(lightSourceScene, "model", glm::translate(glm::mat4(1.0f), lightPos) * glm::scale(glm::mat4(1.0f), glm::vec3(0.25f)));
-		
+		SetUniformVec3(lightSourceScene, "lightColor", lightColor);
+
 		mainCamera.setShaderView(lightSourceScene, mainCamera.getViewMatrix());
 		mainCamera.setShaderProjection(lightSourceScene, projectionMatrix);
 
@@ -456,29 +488,6 @@ int main(int argc, char*argv[])
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 			glfwSetWindowShouldClose(window, true);
 
-		if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)
-		{
-			lightPos   += glm::vec3(1.0f, 0.0f, 0.0f);
-			//lightFocus += glm::vec3(1.0f, 0.0f, 0.0f);
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
-		{
-			lightPos   += glm::vec3(-1.0f, 0.0f, 0.0f);
-			//lightFocus += glm::vec3(-1.0f, 0.0f, 0.0f);
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
-		{
-			lightPos   += glm::vec3(0.0f, 1.0f, 0.0f);
-			//lightFocus += glm::vec3(1.0f, 0.0f, 0.0f);
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
-		{
-			lightPos   += glm::vec3(0.0f, -1.0f, 0.0f);
-			//lightFocus += glm::vec3(-1.0f, 0.0f, 0.0f);
-		}
     }
 
     glfwTerminate();
