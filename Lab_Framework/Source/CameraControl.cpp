@@ -105,7 +105,7 @@ void CameraControl::setSceneObject(SceneObject _player)
 	this->playerBody = _player;
 }
 
-void CameraControl::firstPersonController(GLFWwindow* _window, GLuint _shader, glm::vec3 &_playerPos)
+void CameraControl::playerController(GLFWwindow* _window, GLuint _shader, glm::vec3 &_playerPos, glm::mat4 &_playerTransform)
 {   
 	glfwGetCursorPos(_window, &this->mousePosX, &this->mousePosY);
 
@@ -154,79 +154,23 @@ void CameraControl::firstPersonController(GLFWwindow* _window, GLuint _shader, g
 	}
 
 	// Clamp Y position
-	 
+	
+	float radius = 10.0;
+
+	glm::vec3 position = this->cameraPositon - (radius * cameraLookAt);
+	viewMatrix = lookAt(position, position + cameraLookAt, cameraUp);
+
 	this->cameraPositon.y = -3.0f;
+	position.y = -4.0f;
 
-	this->setViewMatrix(glm::lookAt(this->cameraPositon, this->cameraPositon + this->cameraLookAt, this->cameraUp));
+	if (this->toggleView)
+		this->setViewMatrix(glm::lookAt(this->cameraPositon, this->cameraPositon + this->cameraLookAt, this->cameraUp));
+	else
+		this->setViewMatrix(viewMatrix);
+
 	this->setShaderView(_shader, this->getViewMatrix());
 
-	//_playertransform = glm::translate(glm::mat4(1.0f), this->cameraPositon + glm::vec3(0.0f, 0.0f, -10.0f));
-	//std::cout << _playerPos.z << std::endl;
-}
-
-void CameraControl::thirdPersonController(GLFWwindow* _window, GLuint _shader, glm::vec3 &_playerPos, glm::mat4 &_playerTransform)
-{
-	glm::vec3 fixed(0.0f, -1.0f, -5.0f);
-
-	glfwGetCursorPos(_window, &this->mousePosX, &this->mousePosY);
-
-	float dt = glfwGetTime() - this->lastFrameTime;
-
-	bool fastCam = glfwGetKey(_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(_window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
-		float currentCameraSpeed = (fastCam) ? this->cameraFastSpeed : this->cameraSpeed;
-
-	double dx = this->mousePosX - this->lastMousePosX;
-	double dy = this->mousePosY - this->lastMousePosY;
-
-	this->lastFrameTime += dt;
-	this->lastMousePosX = this->mousePosX;
-	this->lastMousePosY = this->mousePosY;
-
-	this->cameraHorizontalAngle -= dx * this->cameraAngularSpeed * dt;
-	this->cameraVerticalAngle -= dy * this->cameraAngularSpeed * dt;
-
-	this->cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, this->cameraVerticalAngle));
-
-	float theta = glm::radians(this->cameraHorizontalAngle);
-	
-	//this->setCameraLookAt(glm::vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta)));
-	glm::vec3 cameraSideVector = glm::cross(glm::vec3(cosf(theta), 0.0f, sinf(theta)), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::normalize(cameraSideVector);
-	
-
-	if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS)
-	{
-		_playerPos += dt * currentCameraSpeed * cameraSideVector;
-			//* glm::vec3(0.0f, 0.0f, -1.0f);
-	}
-
-	if (glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS)
-	{
-		_playerPos += dt * currentCameraSpeed * cameraSideVector;
-	}
-
-	if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS)
-	{
-		_playerPos +=  dt * currentCameraSpeed * cameraSideVector;
-	}
-
-	if (glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS)
-	{
-		_playerPos += dt * currentCameraSpeed * cameraSideVector;
-	}
-
-	_playerPos.y += -4.0f;
-
-	/// Clamp Y position ///
-	glm::vec3 cameraPos = _playerPos + glm::vec3(0.0f, 1.0f, 8.0f);
-
-	glm::mat4 rotation          = glm::rotate(glm::mat4(1.0f), -theta, glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 translation       = glm::translate(glm::mat4(1.0f), _playerPos);
-
-	_playerTransform = translation * rotation;
-
-	this->setCameraPosition(cameraPos);
-	this->setViewMatrix(glm::lookAt(cameraPos, _playerPos, glm::vec3(0.0f, 1.0f, 0.0f)));
-	this->setShaderView(_shader, this->getViewMatrix());
+	_playerTransform = glm::translate(glm::mat4(1.0f), this->cameraPositon + glm::vec3(0.0f, -1.0f, 0.0f))
+		* glm::rotate(glm::mat4(1.0f), theta, glm::vec3(0.0f, 1.0f, 0.0f));
 }
 

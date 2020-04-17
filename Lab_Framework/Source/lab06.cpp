@@ -33,8 +33,14 @@ GLuint loadTexture(const char* filename)
 	glBindTexture(GL_TEXTURE_2D, textureId);
 
 	// Step2 Set filter parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 	// Step3 Load Textures with dimension data
 	int width, height, nrChannels;
@@ -393,8 +399,9 @@ int main(int argc, char*argv[])
 		lastPos = glm::vec3(rand() % 200 + (-100), -5.0f, rand() % 100 + (-50));
 		objectPosVector.push_back(lastPos);
 
-		float scaleX = rand() % 4 + 1;
-		float scaleY = rand() % 6 + 1;
+		float scaleX = rand() % 3 + 1;
+		float scaleY = rand() % 6 + 3
+;
 
 		lastSca = glm::vec3(scaleX, scaleY, scaleX);
 
@@ -488,22 +495,28 @@ int main(int argc, char*argv[])
 		glm::mat4 playerFront = glm::mat4(1.0f);
 		glm::vec3 _currentPlayerPos = sphere.getPosition();
 
+		// Projection matrix
+		mainCamera.setShaderProjection(shaderScene, projectionMatrix);
+
+		// True for first person
+		// False for third person
 		if (togglePlayerView)
 		{
-			mainCamera.firstPersonController(window, shaderScene, _currentPlayerPos);
+			mainCamera.toggleView = togglePlayerView;
 		}
 		else
 		{
-			mainCamera.thirdPersonController(window, shaderScene, _currentPlayerPos, playerTransform);
+			mainCamera.toggleView = togglePlayerView;
 		}
 
-		mainCamera.setShaderProjection(shaderScene, projectionMatrix);
+		mainCamera.playerController(window, shaderScene, _currentPlayerPos, playerTransform);
 
 		sphere.setPosition(_currentPlayerPos);
 		
 		if (!togglePlayerView)
 		{
 			glBindVertexArray(sphere.getVAO());
+			//playerTransform = glm::translate(glm::mat4(1.0f), mainCamera.getCameraPosition());
 			// * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f));
 			SetUniformMat4(shaderScene, "model", playerTransform);
 			sphere.Draw();
@@ -511,7 +524,7 @@ int main(int argc, char*argv[])
 			glBindVertexArray(sphere.getVAO());
 			sphere.setTexture(cementTextureID);
 			playerFront = playerTransform
-				* glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, -1.0f)) 
+				* glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.5f, 0.0f)) 
 				* glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
 			SetUniformMat4(shaderScene, "model", playerFront);
 			sphere.Draw();
@@ -538,7 +551,7 @@ int main(int argc, char*argv[])
 				glBindVertexArray(sphere.getVAO());
 				sphere.setTexture(grassTextureID);
 				SetUniformMat4(shaderScene, "model", glm::translate(glm::mat4(1.0f), objectPosVector.at(i)) 
-					* glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, objectScaVector.at(i).y * 3.0f, 0.0f)) 
+					* glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, objectScaVector.at(i).y * 4.0f, 0.0f)) 
 					* glm::scale(glm::mat4(1.0f), glm::vec3(objectScaVector.at(i).y * 1.2f)));
 				sphere.Draw();
 			}
@@ -607,6 +620,7 @@ int main(int argc, char*argv[])
 		///////////////////////////////////////////////////////////////////////
 		////////
 		////////						LIGHT SOURCE SHADER
+
 		////////
 		///////////////////////////////////////////////////////////////////////
 

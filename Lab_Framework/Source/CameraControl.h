@@ -36,6 +36,7 @@ private:
 	SceneObject playerBody;
 
 public:
+	bool toggleView = false;
 
 	const float cameraAngularSpeed = 5.0f;
 
@@ -76,8 +77,7 @@ public:
 	void setShaderView(GLuint _shaderProgram, glm::mat4 _viewMatrix);
 	void setShaderProjection(GLuint _shaderProgram, glm::mat4 _projectionMatrix);
 
-	void firstPersonController(GLFWwindow * _window, GLuint _shader, glm::vec3 &_playerPos);
-	void thirdPersonController(GLFWwindow * _window, GLuint _shader, glm::vec3 &_playerPos, glm::mat4 &_playerTransform);
+	void playerController(GLFWwindow * _window, GLuint _shader, glm::vec3 &_playerPos, glm::mat4 &_playerTransform);
 
 	void toggleViewChange();
 };
