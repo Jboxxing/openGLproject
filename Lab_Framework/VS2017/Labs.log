@@ -1,8 +1,9 @@
-﻿  lab06.cpp
-c:\dev\openglproject\lab_framework\source\shaderloader.h(25): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'std::string'
-c:\dev\openglproject\lab_framework\source\lab06.cpp(179): warning C4244: 'argument': conversion from 'const float' to 'int', possible loss of data
-c:\dev\openglproject\lab_framework\source\lab06.cpp(385): warning C4244: 'argument': conversion from 'const float' to 'GLsizei', possible loss of data
-c:\dev\openglproject\lab_framework\source\lab06.cpp(400): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-c:\dev\openglproject\lab_framework\source\lab06.cpp(401): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-c:\dev\openglproject\lab_framework\source\lab06.cpp(431): warning C4018: '<': signed/unsigned mismatch
+﻿  CameraControl.cpp
+c:\dev\openglproject\lab_framework\source\cameracontrol.cpp(93): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\dev\openglproject\lab_framework\source\cameracontrol.cpp(112): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\dev\openglproject\lab_framework\source\cameracontrol.cpp(124): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+c:\dev\openglproject\lab_framework\source\cameracontrol.cpp(125): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+c:\dev\openglproject\lab_framework\source\cameracontrol.cpp(173): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\dev\openglproject\lab_framework\source\cameracontrol.cpp(185): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+c:\dev\openglproject\lab_framework\source\cameracontrol.cpp(186): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
   Labs.vcxproj -> C:\dev\openGLproject\Lab_Framework\VS2017\/../Bin/Labs-Debug.exe

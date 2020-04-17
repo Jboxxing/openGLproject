@@ -157,6 +157,81 @@ GLuint setUpModelInstanceEBO(string path, int& vertexCount) {
 	return VAO;
 }
 
+GLuint terrainVBO = 0, terrainN_VBO = 0, terrainEBO = 0;
+GLuint terrainVAO;
+int terrainCount = 0;
+
+//void genTerrain(GLuint _shaderProgram, int wRes = 128, int lRes = 128)
+//{
+//	const int size = wRes * lRes;
+//	std::vector<glm::vec3> vertices(size), normals(size);
+//	std::vector<glm::vec3> tris;
+//
+//	const float width = 10.0f, length = 10.0f;
+//
+//	int i = 0;
+//	for (int z = 0; z < lRes; z++) for (int x = 0; x < wRes; x++)
+//	{
+//		glm::vec3 vert(x / (float)wRes, 0, z / (float)lRes);
+//
+//		vert.x *= width;
+//		vert.z *= length;
+//		vert.x -= width/2;
+//		vert.z -= width/2;
+//
+//		vertices[i] = vert;
+//		normals[i] = glm::vec3(0.0f, 1.0f, 0.0f);
+//
+//		if ((i + 1 % wRes) != 0 && z + 1 < lRes)
+//		{
+//			glm::vec3 tri(i, i + wRes, i + wRes + 1);
+//			glm::vec3 tri2(i, i + wRes + 1, i + 1);
+//
+//			tris.push_back(tri);
+//			tris.push_back(tri2);
+//		}
+//
+//		i++;
+//	}
+//
+//	terrainCount = tris.size();
+//
+//	glGenVertexArrays(1, &terrainVAO);
+//	glBindVertexArray(terrainVAO);
+//
+//	glGenBuffers(1, &terrainVBO);
+//	glBindBuffer(GL_ARRAY_BUFFER, terrainVBO);
+//	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*vertices.size(), vertices.data(), GL_STATIC_DRAW);
+//	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+//	glEnableVertexAttribArray(0);
+//
+//	glGenBuffers(1, &terrainN_VBO);
+//	glBindBuffer(GL_ARRAY_BUFFER, terrainN_VBO);
+//	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*normals.size(), normals.data(), GL_STATIC_DRAW);
+//	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+//	glEnableVertexAttribArray(1);
+//
+//	glGenBuffers(1, &terrainEBO);
+//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainEBO);
+//	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(glm::vec3)*tris.size(), tris.data(), GL_STATIC_DRAW);
+//	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+//	glEnableVertexAttribArray(2);
+//
+//	glUseProgram(_shaderProgram);
+//	glBindVertexArray(terrainVAO);
+//	glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+//}
+
+glm::vec3 cameraPosition;
+bool togglePlayerView = true;
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+	{
+		togglePlayerView = !togglePlayerView;
+	}
+}
+
 int main(int argc, char*argv[])
 {
     // Initialize GLFW and OpenGL version
@@ -232,7 +307,7 @@ int main(int argc, char*argv[])
 	const float DEPTH_MAP_TEXTURE_SIZE = 1024;
 
 	// Camera parameters for view transform
-	glm::vec3 cameraPosition(0.0f, 2.0f, 20.0f);
+	cameraPosition = glm::vec3(0.0f, -2.0f, 20.0f);
 	glm::vec3 cameraLookAt(0.0f, 0.0f, -1.0f);
 	glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
 
@@ -274,8 +349,8 @@ int main(int argc, char*argv[])
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 	// attach depth texture as FBO's depth buffer
@@ -293,7 +368,8 @@ int main(int argc, char*argv[])
 
 	// lighting
 	//glm::vec3 lightPos(15.0f, 10.0f, -5.0f);
-	glm::vec3 lightColor(1.0f);
+	//glm::vec3 lightColor(0.6f, 0.4f, 0.8f);
+	glm::vec3 lightColor(1.0f, 0.7f, 0.4f);
 
 	///////////////////////////////////////////////////////////////////////
 	////////
@@ -302,39 +378,54 @@ int main(int argc, char*argv[])
 	///////////////////////////////////////////////////////////////////////
 
 	std::vector<glm::vec3> objectPosVector;
+	std::vector<glm::vec3> objectScaVector;
+
 	std::vector<glm::vec3> floorPosVector;
 
 	glm::mat4 playerPosition = glm::translate(glm::mat4(1.0f), mainCamera.getCameraPosition());
 	glm::vec3 lastPos;
+	glm::vec3 lastSca;
 
 	srand((unsigned)time(0));
 
-	for (unsigned int i = 0; i < 500; i++) {
-		lastPos = glm::vec3(rand() % 200 + (-100), 0.0f, rand() % 100 + (-50));
+	for (unsigned int i = 0; i < 200; i++) {
+
+		lastPos = glm::vec3(rand() % 200 + (-100), -5.0f, rand() % 100 + (-50));
 		objectPosVector.push_back(lastPos);
+
+		float scaleX = rand() % 4 + 1;
+		float scaleY = rand() % 6 + 1;
+
+		lastSca = glm::vec3(scaleX, scaleY, scaleX);
+
+		objectScaVector.push_back(lastSca);
 	}
 
 	for (int i = -2; i < 3; i++) {
-		for (int j = -2; j < 3; j++) {
-			lastPos = glm::vec3(j * 50, -3.0f, i * 50);
-			floorPosVector.push_back(lastPos);
-		}
+		lastPos = glm::vec3(mainCamera.getCameraPosition().x, -5.0f, i * 50);
+		floorPosVector.push_back(lastPos);
+		std::cout << lastPos.y << std::endl;
 	}
 
 	SceneObject treeTrunkCube("CUBE", glm::vec3(0.0f), shaderScene, treeBarkTextureID, cubePath, 0);
 	SceneObject cube("CUBE", glm::vec3(0.0f), shaderScene, grassTextureID, cubePath, 0);
-	SceneObject sphere("SPHERE", glm::vec3(0.0f), shaderScene, brickTextureID, spherePath, 0);
-	SceneObject light_cube("LIGHT", glm::vec3(0.0f), lightSourceScene, cementTextureID, cubePath, 0);
-	SceneObject floor_plane("FLOOR", glm::vec3(0.0f, -3.0f, 0.0f), shaderScene, grassTextureID, planePath, 0);
+	SceneObject sphere("SPHERE", glm::vec3(0.0f, -3.0f, -5.0f), shaderScene, brickTextureID, spherePath, 0);
+	SceneObject light_sphere("LIGHT", glm::vec3(0.0f), lightSourceScene, 0, spherePath, 0);
+	SceneObject floor_plane("FLOOR", glm::vec3(0.0f, -5.0f, 0.0f), shaderScene, grassTextureID, planePath, 0);
+	SceneObject player_cube("CUBE", mainCamera.getCameraPosition(), shaderScene, 0, cubePath, 0);
+
+	//SceneObject pro_floor("FLOOR", glm::vec3(0.0f, -3.0f, 0.0f), shaderScene, grassTextureID, planePath, 2);
 	//SceneObject joe_blo("FLOOR", glm::vec3(0.0f), shaderScene, grassTextureID, joePath, 0);
 
-	glm::vec3 furthestF = floorPosVector.at(2);
+	glm::vec3 furthestF = floorPosVector.at(0);
 	float d_front = 150;
-	int f_pos = 2;
+	int f_pos = 0;
 
-	glm::vec3 furthestB = floorPosVector.at(22);
+	glm::vec3 furthestB = floorPosVector.at(4);
 	float d_back = 150;
-	int b_pos = 22;
+	int b_pos = 4;
+
+	bool viewType = false;
 
     // Entering Main Loop
     while(!glfwWindowShouldClose(window))
@@ -343,11 +434,9 @@ int main(int argc, char*argv[])
 		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		mainCamera.playerController(window, shaderScene, viewMatrix, cameraPosition, cameraLookAt);
-		mainCamera.setShaderProjection(shaderScene, projectionMatrix);
-
 		// Light Position stays above the player by 10 units as they move
-		glm::vec3 lightPos(mainCamera.getCameraPosition() + glm::vec3(0.0f, 10.0f, 0.0f));
+		//glm::vec3 lightPos(mainCamera.getCameraPosition() + glm::vec3(0.0f, 10.0f, 0.0f));
+		glm::vec3 lightPos(glm::vec3(mainCamera.getCameraPosition().x - 100.0f, 90.0f, mainCamera.getCameraPosition().z - 80));
 
 		///////////////////////////////////////////////////////////////////////
 		////////
@@ -376,7 +465,7 @@ int main(int argc, char*argv[])
 			glClear(GL_DEPTH_BUFFER_BIT);
 
 			glBindVertexArray(floor_plane.getVAO());
-			SetUniformMat4(shaderShadow, "model", glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)));
+			SetUniformMat4(shaderShadow, "model", glm::translate(glm::mat4(1.0f), floor_plane.getPosition()) * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)));
 			floor_plane.Draw();
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -392,7 +481,41 @@ int main(int argc, char*argv[])
 		SetUniformVec3(shaderScene, "viewPos", cameraPosition);
 		SetUniformVec3(shaderScene, "lightColor", lightColor);
 
-		glm::mat4 newTran = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f));
+		/// PLAYER ///
+
+		//glm::mat4 playerTransform = glm::translate(glm::mat4(1.0f), mainCamera.getCameraPosition() + glm::vec3(0.0f, 0.0f, -10.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f));
+		glm::mat4 playerTransform = glm::mat4(1.0f);
+		glm::mat4 playerFront = glm::mat4(1.0f);
+		glm::vec3 _currentPlayerPos = sphere.getPosition();
+
+		if (togglePlayerView)
+		{
+			mainCamera.firstPersonController(window, shaderScene, _currentPlayerPos);
+		}
+		else
+		{
+			mainCamera.thirdPersonController(window, shaderScene, _currentPlayerPos, playerTransform);
+		}
+
+		mainCamera.setShaderProjection(shaderScene, projectionMatrix);
+
+		sphere.setPosition(_currentPlayerPos);
+		
+		if (!togglePlayerView)
+		{
+			glBindVertexArray(sphere.getVAO());
+			// * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f));
+			SetUniformMat4(shaderScene, "model", playerTransform);
+			sphere.Draw();
+
+			glBindVertexArray(sphere.getVAO());
+			sphere.setTexture(cementTextureID);
+			playerFront = playerTransform
+				* glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, -1.0f)) 
+				* glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
+			SetUniformMat4(shaderScene, "model", playerFront);
+			sphere.Draw();
+		}
 
 		treeTrunkCube.setShader(shaderScene);
 		for (unsigned int i = 0; i < objectPosVector.size(); i++)
@@ -402,37 +525,55 @@ int main(int argc, char*argv[])
 
 			if (glm::distance(objectPosVector.at(i), mainCamera.getCameraPosition()) > 100)
 			{
-				objectPosVector.at(i) = glm::vec3(mainCamera.getCameraPosition().x + x, 0.0f, mainCamera.getCameraPosition().z - z);
+				objectPosVector.at(i) = glm::vec3(mainCamera.getCameraPosition().x + x, -5.0f, mainCamera.getCameraPosition().z - z);
 			}
 			else 
 			{
 				glBindVertexArray(treeTrunkCube.getVAO());
 				treeTrunkCube.setTexture(treeBarkTextureID);
-				SetUniformMat4(shaderScene, "model", glm::translate(glm::mat4(1.0f), objectPosVector.at(i)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.4f, 3.0f, 0.4f)));
+				SetUniformMat4(shaderScene, "model", glm::translate(glm::mat4(1.0f), objectPosVector.at(i)) 
+					* glm::scale(glm::mat4(1.0f), glm::vec3(0.3f * objectScaVector.at(i).x, 3.0f * objectScaVector.at(i).y, 0.3f * objectScaVector.at(i).z)));
 				treeTrunkCube.Draw();
 
-				glBindVertexArray(treeTrunkCube.getVAO());
-				treeTrunkCube.setTexture(grassTextureID);
-				SetUniformMat4(shaderScene, "model", glm::translate(glm::mat4(1.0f), objectPosVector.at(i)) * glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(1.2f)));
-				treeTrunkCube.Draw();
-
-				newTran = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f));
+				glBindVertexArray(sphere.getVAO());
+				sphere.setTexture(grassTextureID);
+				SetUniformMat4(shaderScene, "model", glm::translate(glm::mat4(1.0f), objectPosVector.at(i)) 
+					* glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, objectScaVector.at(i).y * 3.0f, 0.0f)) 
+					* glm::scale(glm::mat4(1.0f), glm::vec3(objectScaVector.at(i).y * 1.2f)));
+				sphere.Draw();
 			}
 		}
 
-		glBindVertexArray(sphere.getVAO());
-		SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f)));
-		sphere.Draw();
+		glBindVertexArray(light_sphere.getVAO());
+		sphere.setTexture(brickTextureID);
+		SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(10.0f)));
+		light_sphere.Draw();
 
-		glBindVertexArray(light_cube.getVAO());
-		SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f)));
-		light_cube.Draw();
+		//mainCamera.setCameraPosition(mainCamera.getCameraPosition() - glm::vec3(0.0f, 0.0f, -10.0f));
+		// * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)));
 
 		for (int i = 0; i < floorPosVector.size(); i++)
 		{
 			floor_plane.setShader(shaderScene);
+
 			glBindVertexArray(floor_plane.getVAO());
 			SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), floorPosVector.at(i)) * glm::scale(glm::mat4(1.0f), glm::vec3(50.0f)));
+			floor_plane.Draw();
+
+			glBindVertexArray(floor_plane.getVAO());
+			SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), floorPosVector.at(i) + glm::vec3(-50.0f, 0.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(50.0f)));
+			floor_plane.Draw();
+
+			glBindVertexArray(floor_plane.getVAO());
+			SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), floorPosVector.at(i) + glm::vec3(-100.0f, 0.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(50.0f)));
+			floor_plane.Draw();
+
+			glBindVertexArray(floor_plane.getVAO());
+			SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), floorPosVector.at(i) + glm::vec3(50.0f, 0.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(50.0f)));
+			floor_plane.Draw();			
+			
+			glBindVertexArray(floor_plane.getVAO());
+			SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), floorPosVector.at(i) + glm::vec3(100.0f, 0.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(50.0f)));
 			floor_plane.Draw();
 		}
 
@@ -440,26 +581,23 @@ int main(int argc, char*argv[])
 		{
 			floorPosVector.at(b_pos).z = floorPosVector.at(f_pos).z - 50;
 			f_pos = b_pos;
-			b_pos -= 5;
+			b_pos--;
 			if (b_pos < 0)
-				b_pos = 22;
+				b_pos = 4;
 			furthestB = floorPosVector.at(b_pos);
 		}
 
-		if (glm::distance(mainCamera.getCameraPosition(), furthestF) > d_front)
-		{
-			floorPosVector.at(f_pos).z = floorPosVector.at(b_pos).z + 50;
-			b_pos = f_pos;
-			f_pos += 5;
-			if (f_pos > 22)
-				b_pos = 2;
-			furthestF = floorPosVector.at(f_pos);
-		}
+		//genTerrain(shaderScene);
 
-		//std::cout << mainCamera.getCameraPosition().x << std::endl;
-		std::cout << b_pos << std::endl;
-		std::cout << floorPosVector.at(b_pos).z << std::endl;
-		std::cout << floorPosVector.at(f_pos).z << std::endl;
+		//if (glm::distance(mainCamera.getCameraPosition(), furthestF) > d_front)
+		//{
+		//	floorPosVector.at(f_pos).z = floorPosVector.at(b_pos).z + 50;
+		//	b_pos = f_pos;
+		//	f_pos += 5;
+		//	if (f_pos > 22)
+		//		b_pos = 2;
+		//	furthestF = floorPosVector.at(f_pos);
+		//}
 		
 		//joe_blo.setShader(shaderScene);
 		//glBindVertexArray(joe_blo.getVAO());
@@ -474,7 +612,7 @@ int main(int argc, char*argv[])
 
 		glUseProgram(lightSourceScene);
 
-		SetUniformMat4(lightSourceScene, "model", glm::translate(glm::mat4(1.0f), lightPos) * glm::scale(glm::mat4(1.0f), glm::vec3(0.25f)));
+		SetUniformMat4(lightSourceScene, "model", glm::translate(glm::mat4(1.0f), lightPos) * glm::scale(glm::mat4(1.0f), glm::vec3(3.25f)));
 		SetUniformVec3(lightSourceScene, "lightColor", lightColor);
 
 		mainCamera.setShaderView(lightSourceScene, mainCamera.getViewMatrix());
@@ -483,12 +621,17 @@ int main(int argc, char*argv[])
         // End Frame
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+		// Initial keyCallback setup
+		glfwSetKeyCallback(window, key_callback);
         
         // Handle inputs
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 			glfwSetWindowShouldClose(window, true);
 
-    }
+		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+			glfwSetKeyCallback(window, key_callback);
+	}
 
     glfwTerminate();
     

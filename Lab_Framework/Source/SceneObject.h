@@ -3,6 +3,8 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <cstdlib>
+#include <ctime>
 
 #define GLEW_STATIC 1
 #include <GL/glew.h>
@@ -31,6 +33,7 @@ private:
 
 	void initVBO(std::string path);
 	void initEBO(std::string path);
+	void initProceduralVBO();
 
 public:
 	SceneObject();

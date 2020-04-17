@@ -12,9 +12,9 @@ uniform vec3 viewPos;
 //uniform vec3 objectColor;
 uniform vec3 lightColor = vec3(1.0f);
 
-uniform vec3 shading_ambient_strength  = vec3(0.5);
-uniform vec3 shading_diffuse_strength  = vec3(0.5);
-uniform vec3 shading_specular_strength = vec3(0.2);
+uniform vec3 shading_ambient_strength  = vec3(0.8);
+uniform vec3 shading_diffuse_strength  = vec3(0.9);
+uniform vec3 shading_specular_strength = vec3(0.3);
 
 uniform sampler2D shadow_map;
 uniform sampler2D diffuse_texture;

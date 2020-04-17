@@ -3,6 +3,62 @@
 #include "OBJloader.h"
 #include "OBJloaderV2.h"
 
+void SceneObject::initProceduralVBO()
+{
+	std::vector<glm::vec3> vertices;
+
+	srand((unsigned)time(0));
+
+	for (int i = -2; i < 3; i++) 
+	{
+		for (int j = -2; j < 3; j++) 
+		{
+			glm::vec3 current = glm::vec3(j * 2.0f, 0, i * 2.0f);
+			vertices.push_back(current);
+			std::cout << current.x << " " << current.y << " " << current.z << std::endl;
+		}
+	}
+
+	std::vector<glm::vec3> normals;
+
+
+
+	std::vector<glm::vec2> UVs;
+
+	GLuint VAO;
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO); //Becomes active VAO
+	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+
+	//Vertex VBO setup
+	GLuint vertices_VBO;
+	glGenBuffers(1, &vertices_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertices_VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+
+	////Normals VBO setup
+	//GLuint normals_VBO;
+	//glGenBuffers(1, &normals_VBO);
+	//glBindBuffer(GL_ARRAY_BUFFER, normals_VBO);
+	//glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals.front(), GL_STATIC_DRAW);
+	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	//glEnableVertexAttribArray(1);
+
+	////UVs VBO setup
+	//GLuint uvs_VBO;
+	//glGenBuffers(1, &uvs_VBO);
+	//glBindBuffer(GL_ARRAY_BUFFER, uvs_VBO);
+	//glBufferData(GL_ARRAY_BUFFER, UVs.size() * sizeof(glm::vec2), &UVs.front(), GL_STATIC_DRAW);
+	//glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
+	//glEnableVertexAttribArray(2);
+
+	glBindVertexArray(0);
+	this->vertexCount = vertices.size();
+	this->VAO = VAO;
+}
+
 void SceneObject::initVBO(std::string path)
 {
 	std::vector<glm::vec3> vertices;
@@ -117,6 +173,8 @@ SceneObject::SceneObject(std::string _name, glm::vec3 _position, GLuint _shader,
 		this->initVBO(_objectPath);
 	else if (_bufferType == 1)
 		this->initEBO(_objectPath);
+	else if (_bufferType == 2)
+		this->initProceduralVBO();
 	else
 	{
 		std::cout << "VAO not generated. Setting to 0." << std::endl;
@@ -135,6 +193,11 @@ void SceneObject::Draw()
 	{
 		glUseProgram(this->getShader());
 		glBindTexture(GL_TEXTURE_2D, this->getTexture());
+		glDrawArrays(GL_TRIANGLES, 0, this->getVertices());
+	}
+	else if (this->bufferType == 2)
+	{
+		glUseProgram(this->getShader());
 		glDrawArrays(GL_TRIANGLES, 0, this->getVertices());
 	}
 	else 

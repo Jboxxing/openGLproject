@@ -14,6 +14,8 @@
 
 #include <GLFW/glfw3.h>
 
+#include "SceneObject.h"
+
 class CameraControl 
 {
 private:
@@ -30,6 +32,8 @@ private:
 
 	glm::mat4 viewMatrix;
 	glm::mat4 projectionMatrix;
+	
+	SceneObject playerBody;
 
 public:
 
@@ -54,6 +58,7 @@ public:
 	~CameraControl();
 
 	glm::vec3 getCameraPosition() const;
+	glm::vec3 getCameraLookAt() const;
 
 	void initCameraControls(GLFWwindow* _window);
 
@@ -65,8 +70,14 @@ public:
 
 	void setProjectionMatrix(glm::mat4 _projMat);
 
+	SceneObject getSceneObject() const;
+	void setSceneObject(SceneObject _player);
+
 	void setShaderView(GLuint _shaderProgram, glm::mat4 _viewMatrix);
 	void setShaderProjection(GLuint _shaderProgram, glm::mat4 _projectionMatrix);
 
-	void playerController(GLFWwindow * _window, GLuint _shader, glm::mat4 _viewMatrix, glm::vec3 _pos, glm::vec3 _look);
+	void firstPersonController(GLFWwindow * _window, GLuint _shader, glm::vec3 &_playerPos);
+	void thirdPersonController(GLFWwindow * _window, GLuint _shader, glm::vec3 &_playerPos, glm::mat4 &_playerTransform);
+
+	void toggleViewChange();
 };
