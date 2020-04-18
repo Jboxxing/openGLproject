@@ -68,6 +68,14 @@ GLuint loadTexture(const char* filename)
 	return textureId;
 }
 
+void vectorToString(glm::vec3 _vector) {
+	float x = _vector.x;
+	float y = _vector.y;
+	float z = _vector.z;
+
+	std::cout << "Vector Coordinates: " << x << " " << y << " " << z << std::endl;
+}
+
 void SetUniformMat4(GLuint shader_id, const char* uniform_name, glm::mat4 uniform_value)
 {
 	glUseProgram(shader_id);
@@ -229,7 +237,8 @@ int terrainCount = 0;
 //}
 
 glm::vec3 cameraPosition;
-bool togglePlayerView = true;
+// Start at third Person
+bool togglePlayerView = false;
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
@@ -292,6 +301,7 @@ int main(int argc, char*argv[])
 	string spherePath = "../Assets/Models/uvSphere.obj";
 	string planePath = "../Assets/Models/plane.obj";
 	string joePath = "../Assets/Models/heracles.obj";
+	string cylinderPath = "../Assets/Models/cylinder.obj";
 
 	string shaderPathPrefix = "../Assets/Shaders/";
 
@@ -373,7 +383,6 @@ int main(int argc, char*argv[])
 	SetUniform1Value(shaderScene, "shadow_map", 1);
 
 	// lighting
-	//glm::vec3 lightPos(15.0f, 10.0f, -5.0f);
 	//glm::vec3 lightColor(0.6f, 0.4f, 0.8f);
 	glm::vec3 lightColor(1.0f, 0.7f, 0.4f);
 
@@ -382,6 +391,10 @@ int main(int argc, char*argv[])
 	////////				W O R L D  G E N E R A T I O N
 	////////
 	///////////////////////////////////////////////////////////////////////
+
+	// Closest tree
+	glm::vec3 closest_object(0.0f);
+	glm::vec3 closest_object_scale(0.0f);
 
 	std::vector<glm::vec3> objectPosVector;
 	std::vector<glm::vec3> objectScaVector;
@@ -399,13 +412,15 @@ int main(int argc, char*argv[])
 		lastPos = glm::vec3(rand() % 200 + (-100), -5.0f, rand() % 100 + (-50));
 		objectPosVector.push_back(lastPos);
 
-		float scaleX = rand() % 3 + 1;
-		float scaleY = rand() % 6 + 3
-;
+		float scaleX = (rand() % 3 + 1) * 0.35f;
+		float scaleY = rand() % 6 + 3;
 
 		lastSca = glm::vec3(scaleX, scaleY, scaleX);
 
 		objectScaVector.push_back(lastSca);
+
+		if (glm::distance(cameraPosition, lastPos) < glm::distance(cameraPosition, closest_object))
+			closest_object = lastPos;
 	}
 
 	for (int i = -2; i < 3; i++) {
@@ -414,7 +429,8 @@ int main(int argc, char*argv[])
 		std::cout << lastPos.y << std::endl;
 	}
 
-	SceneObject treeTrunkCube("CUBE", glm::vec3(0.0f), shaderScene, treeBarkTextureID, cubePath, 0);
+	SceneObject treeTrunk_cube("CUBE", glm::vec3(0.0f), shaderScene, treeBarkTextureID, cubePath, 0);
+	SceneObject treeTrunk_cylinder("CYLINDER", glm::vec3(0.0f), shaderScene, treeBarkTextureID, cylinderPath, 0);
 	SceneObject cube("CUBE", glm::vec3(0.0f), shaderScene, grassTextureID, cubePath, 0);
 	SceneObject sphere("SPHERE", glm::vec3(0.0f, -3.0f, -5.0f), shaderScene, brickTextureID, spherePath, 0);
 	SceneObject light_sphere("LIGHT", glm::vec3(0.0f), lightSourceScene, 0, spherePath, 0);
@@ -494,6 +510,52 @@ int main(int argc, char*argv[])
 		glm::mat4 playerTransform = glm::mat4(1.0f);
 		glm::mat4 playerFront = glm::mat4(1.0f);
 		glm::vec3 _currentPlayerPos = sphere.getPosition();
+		
+		// Generates trees
+		treeTrunk_cube.setShader(shaderScene);
+		for (unsigned int i = 0; i < objectPosVector.size(); i++)
+		{
+			float x = rand() % 200 + (-100);
+			float z = (rand() % 150) + 50;
+
+			glm::vec3* currentObjPos = &objectPosVector.at(i);
+			glm::vec3* currentObjSca = &objectScaVector.at(i);
+			float currentRadius = currentObjSca->x * 4;
+
+			if (glm::distance(*currentObjPos, mainCamera.getCameraPosition()) > 100)
+			{
+				*currentObjPos = glm::vec3(mainCamera.getCameraPosition().x + x, -3.0f, mainCamera.getCameraPosition().z - z);
+			}
+			else 
+			{
+				// Tree Trunk
+				glBindVertexArray(treeTrunk_cylinder.getVAO());
+				treeTrunk_cube.setTexture(treeBarkTextureID);
+				SetUniformMat4(shaderScene, "model", glm::translate(glm::mat4(1.0f), *currentObjPos)
+					* glm::scale(glm::mat4(1.0f), glm::vec3((*currentObjSca).x, (*currentObjSca).y, (*currentObjSca).z)));
+				treeTrunk_cylinder.Draw();
+
+				// Leaves
+				glBindVertexArray(sphere.getVAO());
+				sphere.setTexture(grassTextureID);
+				SetUniformMat4(shaderScene, "model", glm::translate(glm::mat4(1.0f), *currentObjPos)
+					* glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, (*currentObjSca).y * 4.0f, 0.0f))
+					* glm::scale(glm::mat4(1.0f), glm::vec3((*currentObjSca).y * 1.2f)));
+				sphere.Draw();
+			}
+
+			if ((glm::distance(*currentObjPos, mainCamera.getPlayerBodyPosition()) < glm::distance(closest_object, mainCamera.getPlayerBodyPosition())))
+			{
+				closest_object = *currentObjPos;
+				closest_object_scale = *currentObjSca;
+			}
+		}
+
+		// Sun / Light source
+		glBindVertexArray(light_sphere.getVAO());
+		sphere.setTexture(brickTextureID);
+		SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(10.0f)));
+		light_sphere.Draw();
 
 		// Projection matrix
 		mainCamera.setShaderProjection(shaderScene, projectionMatrix);
@@ -503,67 +565,37 @@ int main(int argc, char*argv[])
 		if (togglePlayerView)
 		{
 			mainCamera.toggleView = togglePlayerView;
+			vectorToString(closest_object);
+			vectorToString(mainCamera.getPlayerBodyPosition());
 		}
 		else
 		{
 			mainCamera.toggleView = togglePlayerView;
+			vectorToString(closest_object);
 		}
 
-		mainCamera.playerController(window, shaderScene, _currentPlayerPos, playerTransform);
+		mainCamera.playerController(window, shaderScene, _currentPlayerPos, playerTransform, closest_object);
 
-		sphere.setPosition(_currentPlayerPos);
-		
 		if (!togglePlayerView)
 		{
 			glBindVertexArray(sphere.getVAO());
-			//playerTransform = glm::translate(glm::mat4(1.0f), mainCamera.getCameraPosition());
-			// * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f));
 			SetUniformMat4(shaderScene, "model", playerTransform);
 			sphere.Draw();
 
 			glBindVertexArray(sphere.getVAO());
 			sphere.setTexture(cementTextureID);
 			playerFront = playerTransform
-				* glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.5f, 0.0f)) 
+				* glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.5f, 0.0f))
 				* glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
 			SetUniformMat4(shaderScene, "model", playerFront);
 			sphere.Draw();
 		}
-
-		treeTrunkCube.setShader(shaderScene);
-		for (unsigned int i = 0; i < objectPosVector.size(); i++)
-		{
-			float x = rand() % 200 + (-100);
-			float z = (rand() % 150) + 50;
-
-			if (glm::distance(objectPosVector.at(i), mainCamera.getCameraPosition()) > 100)
-			{
-				objectPosVector.at(i) = glm::vec3(mainCamera.getCameraPosition().x + x, -5.0f, mainCamera.getCameraPosition().z - z);
-			}
-			else 
-			{
-				glBindVertexArray(treeTrunkCube.getVAO());
-				treeTrunkCube.setTexture(treeBarkTextureID);
-				SetUniformMat4(shaderScene, "model", glm::translate(glm::mat4(1.0f), objectPosVector.at(i)) 
-					* glm::scale(glm::mat4(1.0f), glm::vec3(0.3f * objectScaVector.at(i).x, 3.0f * objectScaVector.at(i).y, 0.3f * objectScaVector.at(i).z)));
-				treeTrunkCube.Draw();
-
-				glBindVertexArray(sphere.getVAO());
-				sphere.setTexture(grassTextureID);
-				SetUniformMat4(shaderScene, "model", glm::translate(glm::mat4(1.0f), objectPosVector.at(i)) 
-					* glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, objectScaVector.at(i).y * 4.0f, 0.0f)) 
-					* glm::scale(glm::mat4(1.0f), glm::vec3(objectScaVector.at(i).y * 1.2f)));
-				sphere.Draw();
-			}
-		}
-
-		glBindVertexArray(light_sphere.getVAO());
-		sphere.setTexture(brickTextureID);
-		SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(10.0f)));
-		light_sphere.Draw();
-
-		//mainCamera.setCameraPosition(mainCamera.getCameraPosition() - glm::vec3(0.0f, 0.0f, -10.0f));
-		// * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)));
+		
+		///////////////////////////////////////////////////////////////////////
+		////////
+		////////						FLOOR GENERATION
+		////////
+		///////////////////////////////////////////////////////////////////////
 
 		for (int i = 0; i < floorPosVector.size(); i++)
 		{
@@ -583,8 +615,8 @@ int main(int argc, char*argv[])
 
 			glBindVertexArray(floor_plane.getVAO());
 			SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), floorPosVector.at(i) + glm::vec3(50.0f, 0.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(50.0f)));
-			floor_plane.Draw();			
-			
+			floor_plane.Draw();
+
 			glBindVertexArray(floor_plane.getVAO());
 			SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), floorPosVector.at(i) + glm::vec3(100.0f, 0.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(50.0f)));
 			floor_plane.Draw();
@@ -600,27 +632,9 @@ int main(int argc, char*argv[])
 			furthestB = floorPosVector.at(b_pos);
 		}
 
-		//genTerrain(shaderScene);
-
-		//if (glm::distance(mainCamera.getCameraPosition(), furthestF) > d_front)
-		//{
-		//	floorPosVector.at(f_pos).z = floorPosVector.at(b_pos).z + 50;
-		//	b_pos = f_pos;
-		//	f_pos += 5;
-		//	if (f_pos > 22)
-		//		b_pos = 2;
-		//	furthestF = floorPosVector.at(f_pos);
-		//}
-		
-		//joe_blo.setShader(shaderScene);
-		//glBindVertexArray(joe_blo.getVAO());
-		//SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, -5.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f)));
-		//joe_blo.Draw();
-
 		///////////////////////////////////////////////////////////////////////
 		////////
 		////////						LIGHT SOURCE SHADER
-
 		////////
 		///////////////////////////////////////////////////////////////////////
 

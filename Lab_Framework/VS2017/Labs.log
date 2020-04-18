@@ -1,10 +1,9 @@
 ﻿  lab06.cpp
 c:\dev\openglproject\lab_framework\source\shaderloader.h(25): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'std::string'
-c:\dev\openglproject\lab_framework\source\lab06.cpp(260): warning C4244: 'argument': conversion from 'const float' to 'int', possible loss of data
-c:\dev\openglproject\lab_framework\source\lab06.cpp(402): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-c:\dev\openglproject\lab_framework\source\lab06.cpp(403): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-c:\dev\openglproject\lab_framework\source\lab06.cpp(481): warning C4244: 'argument': conversion from 'const float' to 'GLsizei', possible loss of data
-c:\dev\openglproject\lab_framework\source\lab06.cpp(536): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-c:\dev\openglproject\lab_framework\source\lab06.cpp(537): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-c:\dev\openglproject\lab_framework\source\lab06.cpp(568): warning C4018: '<': signed/unsigned mismatch
+c:\dev\openglproject\lab_framework\source\lab06.cpp(269): warning C4244: 'argument': conversion from 'const float' to 'int', possible loss of data
+c:\dev\openglproject\lab_framework\source\lab06.cpp(416): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+c:\dev\openglproject\lab_framework\source\lab06.cpp(497): warning C4244: 'argument': conversion from 'const float' to 'GLsizei', possible loss of data
+c:\dev\openglproject\lab_framework\source\lab06.cpp(518): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+c:\dev\openglproject\lab_framework\source\lab06.cpp(519): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+c:\dev\openglproject\lab_framework\source\lab06.cpp(600): warning C4018: '<': signed/unsigned mismatch
   Labs.vcxproj -> C:\dev\openGLproject\Lab_Framework\VS2017\/../Bin/Labs-Debug.exe

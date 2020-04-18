@@ -11,7 +11,6 @@ CameraControl::CameraControl()
 	this->cameraLookAt     = glm::vec3(0.0f);
 	this->viewMatrix       = glm::mat4(1.0f);
 	this->projectionMatrix = glm::mat4(1.0f);
-	this->playerBody       = SceneObject();
 }
 
 CameraControl::CameraControl(GLuint _shaderProgram, glm::mat4 _viewMatrix, glm::mat4 _projectionMatrix) :
@@ -19,7 +18,6 @@ CameraControl::CameraControl(GLuint _shaderProgram, glm::mat4 _viewMatrix, glm::
 {
 	this->setShaderView(_shaderProgram, _viewMatrix);
 	this->setShaderProjection(_shaderProgram, _projectionMatrix);
-	this->playerBody = SceneObject("PLAYER", this->cameraPositon, _shaderProgram, 0, "../Assets/Models/cube.obj", 0);
 }
 
 CameraControl::CameraControl(GLuint _shaderProgram, glm::mat4 _projectionMatrix, glm::vec3 _cameraPositon, glm::vec3 _cameraLookAt) :
@@ -27,7 +25,6 @@ CameraControl::CameraControl(GLuint _shaderProgram, glm::mat4 _projectionMatrix,
 {
 	this->setViewMatrix(glm::lookAt(_cameraPositon, _cameraLookAt, this->cameraUp));
 	this->setProjectionMatrix(_projectionMatrix);
-	this->playerBody = SceneObject("PLAYER", this->cameraPositon, _shaderProgram, 0, "../Assets/Models/cube.obj", 0);
 }
 
 CameraControl::~CameraControl()
@@ -57,6 +54,16 @@ glm::mat4 CameraControl::getViewMatrix() const
 void CameraControl::setProjectionMatrix(glm::mat4 _projMat)
 {
 	this->projectionMatrix = _projMat;
+}
+
+glm::vec3 CameraControl::getPlayerBodyPosition() const
+{
+	return this->playerPosition;
+}
+
+void CameraControl::setPlayerBodyPosition(glm::vec3 _playerPosition)
+{
+	this->playerPosition = _playerPosition;
 }
 
 void CameraControl::setShaderView(GLuint _shaderProgram, glm::mat4 _viewMatrix)
@@ -95,17 +102,7 @@ void CameraControl::initCameraControls(GLFWwindow* _window)
 	glfwGetCursorPos(_window, &this->lastMousePosX, &this->lastMousePosY);
 }
 
-SceneObject CameraControl::getSceneObject() const
-{
-	return this->playerBody;
-}
-
-void CameraControl::setSceneObject(SceneObject _player)
-{
-	this->playerBody = _player;
-}
-
-void CameraControl::playerController(GLFWwindow* _window, GLuint _shader, glm::vec3 &_playerPos, glm::mat4 &_playerTransform)
+void CameraControl::playerController(GLFWwindow* _window, GLuint _shader, glm::vec3 &_playerPos, glm::mat4 &_playerTransform, glm::vec3 &_objectPosition)
 {   
 	glfwGetCursorPos(_window, &this->mousePosX, &this->mousePosY);
 
@@ -133,40 +130,51 @@ void CameraControl::playerController(GLFWwindow* _window, GLuint _shader, glm::v
 	glm::vec3 cameraSideVector = glm::cross(this->cameraLookAt, glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::normalize(cameraSideVector);
 
+	glm::vec3 bumper(this->cameraLookAt.x, 0.0f, this->cameraLookAt.z);
+
 	if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS)
 	{
-		this->cameraPositon += this->cameraLookAt * dt * currentCameraSpeed;
+		if (glm::distance(this->playerPosition + bumper, _objectPosition) > 2)
+			this->cameraPositon += this->cameraLookAt * dt * currentCameraSpeed;
 	}
 
 	if (glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS)
 	{
-		this->cameraPositon -= this->cameraLookAt * dt * currentCameraSpeed;
+		if (glm::distance(this->playerPosition + bumper, _objectPosition) > 2)
+			this->cameraPositon -= this->cameraLookAt * dt * currentCameraSpeed;
 	}
 
 	if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS)
 	{
-		this->cameraPositon += cameraSideVector * dt * currentCameraSpeed;
+		if (glm::distance(this->playerPosition + bumper, _objectPosition) > 2)
+			this->cameraPositon += cameraSideVector * dt * currentCameraSpeed;
 	}
 
 	if (glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS)
 	{
-		this->cameraPositon -= cameraSideVector * dt * currentCameraSpeed;
+		if (glm::distance(this->playerPosition + bumper, _objectPosition) > 2)
+			this->cameraPositon -= cameraSideVector * dt * currentCameraSpeed;
 	}
 
 	// Clamp Y position
-	
-	float radius = 10.0;
+	float distance_fromPlayer = 10.0;
 
-	glm::vec3 position = this->cameraPositon - (radius * cameraLookAt);
-	viewMatrix = lookAt(position, position + cameraLookAt, cameraUp);
+	glm::vec3 thirdPerson_position = this->cameraPositon - (distance_fromPlayer * cameraLookAt);
+	viewMatrix = lookAt(thirdPerson_position, thirdPerson_position + cameraLookAt, cameraUp);
 
 	this->cameraPositon.y = -3.0f;
-	position.y = -4.0f;
-
+	thirdPerson_position.y = -4.0f;
+	
 	if (this->toggleView)
+	{
 		this->setViewMatrix(glm::lookAt(this->cameraPositon, this->cameraPositon + this->cameraLookAt, this->cameraUp));
+		this->playerPosition = this->cameraPositon;
+	}
 	else
+	{
 		this->setViewMatrix(viewMatrix);
+		this->playerPosition = this->cameraPositon + glm::vec3(0.0f, -1.0f, 0.0f);
+	}
 
 	this->setShaderView(_shader, this->getViewMatrix());
 

@@ -30,11 +30,11 @@ private:
 	glm::vec3 cameraLookAt;
 	const glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
+	glm::vec3 playerPosition;
+
 	glm::mat4 viewMatrix;
 	glm::mat4 projectionMatrix;
 	
-	SceneObject playerBody;
-
 public:
 	bool toggleView = false;
 
@@ -71,13 +71,11 @@ public:
 
 	void setProjectionMatrix(glm::mat4 _projMat);
 
-	SceneObject getSceneObject() const;
-	void setSceneObject(SceneObject _player);
+	glm::vec3 getPlayerBodyPosition() const;
+	void setPlayerBodyPosition(glm::vec3 _playerPosition);
 
 	void setShaderView(GLuint _shaderProgram, glm::mat4 _viewMatrix);
 	void setShaderProjection(GLuint _shaderProgram, glm::mat4 _projectionMatrix);
 
-	void playerController(GLFWwindow * _window, GLuint _shader, glm::vec3 &_playerPos, glm::mat4 &_playerTransform);
-
-	void toggleViewChange();
+	void playerController(GLFWwindow * _window, GLuint _shader, glm::vec3 &_playerPos, glm::mat4 &_playerTransform, glm::vec3 &_objectPosition);
 };
