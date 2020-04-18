@@ -237,7 +237,6 @@ int terrainCount = 0;
 //}
 
 glm::vec3 cameraPosition;
-// Start at third Person
 bool togglePlayerView = false;
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -311,6 +310,12 @@ int main(int argc, char*argv[])
 	char* treeBarkTexture = "../Assets/Textures/treeBark.png";
 #endif
 
+	///////////////////////////////////////////////////////////////////////
+	////////
+	////////				TEXTURES AND SHADER LOADING
+	////////
+	///////////////////////////////////////////////////////////////////////
+
 	GLuint shaderScene      = loadSHADER(shaderPathPrefix + "sceneVertex.glsl", shaderPathPrefix + "sceneFragment.glsl");
 	GLuint lightSourceScene = loadSHADER(shaderPathPrefix + "lightObjectVertex.glsl", shaderPathPrefix + "lightObjectFragment.glsl");
 	GLuint shaderShadow     = loadSHADER(shaderPathPrefix + "shadow_vertex.glsl", shaderPathPrefix + "shadow_fragment.glsl");
@@ -322,7 +327,12 @@ int main(int argc, char*argv[])
     
 	const float DEPTH_MAP_TEXTURE_SIZE = 1024;
 
-	// Camera parameters for view transform
+	///////////////////////////////////////////////////////////////////////
+	////////
+	////////				CAMERA INITIALIZATION
+	////////
+	///////////////////////////////////////////////////////////////////////
+
 	cameraPosition = glm::vec3(0.0f, -2.0f, 20.0f);
 	glm::vec3 cameraLookAt(0.0f, 0.0f, -1.0f);
 	glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
@@ -335,12 +345,6 @@ int main(int argc, char*argv[])
 		WIDTH / HEIGHT,
 		0.01f, 300.0f);
 
-	///////////////////////////////////////////////////////////////////////
-	////////
-	////////				C A M E R A  C O N T R O L S
-	////////
-	///////////////////////////////////////////////////////////////////////
-
 	CameraControl mainCamera(shaderScene, viewMatrix, projectionMatrix);
 
 	mainCamera.setCameraLookAt(cameraLookAt);
@@ -348,13 +352,18 @@ int main(int argc, char*argv[])
 
 	mainCamera.initCameraControls(window);
 
+	///////////////////////////////////////////////////////////////////////
+	////////
+	////////				SHADOW AND LIGHT CONFIGURATIONS
+	////////
+	///////////////////////////////////////////////////////////////////////
+
     // Other OpenGL states to set once
     glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glEnable(GL_CULL_FACE);
 
 	// configure depth map FBO
-	// ----------------------- 
 	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 	unsigned int depthMapFBO;
 	glGenFramebuffers(1, &depthMapFBO);
@@ -382,13 +391,11 @@ int main(int argc, char*argv[])
 	SetUniform1Value(shaderScene, "diffuse_texture", 0);
 	SetUniform1Value(shaderScene, "shadow_map", 1);
 
-	// lighting
-	//glm::vec3 lightColor(0.6f, 0.4f, 0.8f);
 	glm::vec3 lightColor(1.0f, 0.7f, 0.4f);
 
 	///////////////////////////////////////////////////////////////////////
 	////////
-	////////				W O R L D  G E N E R A T I O N
+	////////			INITIAL WORLD POSITIONS GENERATION
 	////////
 	///////////////////////////////////////////////////////////////////////
 
@@ -429,6 +436,12 @@ int main(int argc, char*argv[])
 		std::cout << lastPos.y << std::endl;
 	}
 
+	///////////////////////////////////////////////////////////////////////
+	////////
+	////////				SET OF RENDEREABLE OBJECTS
+	////////
+	///////////////////////////////////////////////////////////////////////
+
 	SceneObject treeTrunk_cube("CUBE", glm::vec3(0.0f), shaderScene, treeBarkTextureID, cubePath, 0);
 	SceneObject treeTrunk_cylinder("CYLINDER", glm::vec3(0.0f), shaderScene, treeBarkTextureID, cylinderPath, 0);
 	SceneObject cube("CUBE", glm::vec3(0.0f), shaderScene, grassTextureID, cubePath, 0);
@@ -437,8 +450,11 @@ int main(int argc, char*argv[])
 	SceneObject floor_plane("FLOOR", glm::vec3(0.0f, -5.0f, 0.0f), shaderScene, grassTextureID, planePath, 0);
 	SceneObject player_cube("CUBE", mainCamera.getCameraPosition(), shaderScene, 0, cubePath, 0);
 
-	//SceneObject pro_floor("FLOOR", glm::vec3(0.0f, -3.0f, 0.0f), shaderScene, grassTextureID, planePath, 2);
-	//SceneObject joe_blo("FLOOR", glm::vec3(0.0f), shaderScene, grassTextureID, joePath, 0);
+	///////////////////////////////////////////////////////////////////////
+	////////
+	////////				USED TO RECALCULATE FLOOR POSITIONS
+	////////
+	///////////////////////////////////////////////////////////////////////
 
 	glm::vec3 furthestF = floorPosVector.at(0);
 	float d_front = 150;
@@ -447,6 +463,12 @@ int main(int argc, char*argv[])
 	glm::vec3 furthestB = floorPosVector.at(4);
 	float d_back = 150;
 	int b_pos = 4;
+
+	///////////////////////////////////////////////////////////////////////
+	////////
+	////////					VIEW TYPE TOGGLE
+	////////
+	///////////////////////////////////////////////////////////////////////
 
 	bool viewType = false;
 
@@ -463,7 +485,7 @@ int main(int argc, char*argv[])
 
 		///////////////////////////////////////////////////////////////////////
 		////////
-		////////						MAIN WORLD SHADER
+		////////						LIGHTS AND SHADOW SETUP
 		////////
 		///////////////////////////////////////////////////////////////////////
 
@@ -503,15 +525,13 @@ int main(int argc, char*argv[])
 		SetUniformVec3(shaderScene, "lightPos", lightPos);
 		SetUniformVec3(shaderScene, "viewPos", cameraPosition);
 		SetUniformVec3(shaderScene, "lightColor", lightColor);
-
-		/// PLAYER ///
-
-		//glm::mat4 playerTransform = glm::translate(glm::mat4(1.0f), mainCamera.getCameraPosition() + glm::vec3(0.0f, 0.0f, -10.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f));
-		glm::mat4 playerTransform = glm::mat4(1.0f);
-		glm::mat4 playerFront = glm::mat4(1.0f);
-		glm::vec3 _currentPlayerPos = sphere.getPosition();
 		
-		// Generates trees
+		///////////////////////////////////////////////////////////////////////
+		////////
+		////////				TREE GENERATION
+		////////
+		///////////////////////////////////////////////////////////////////////
+
 		treeTrunk_cube.setShader(shaderScene);
 		for (unsigned int i = 0; i < objectPosVector.size(); i++)
 		{
@@ -551,27 +571,29 @@ int main(int argc, char*argv[])
 			}
 		}
 
-		// Sun / Light source
-		glBindVertexArray(light_sphere.getVAO());
-		sphere.setTexture(brickTextureID);
-		SetUniformMat4(shaderScene, "model", glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(10.0f)));
-		light_sphere.Draw();
+		///////////////////////////////////////////////////////////////////////
+		////////
+		////////				PLAYER CONTROLLS / CAMERA
+		////////
+		///////////////////////////////////////////////////////////////////////
 
-		// Projection matrix
 		mainCamera.setShaderProjection(shaderScene, projectionMatrix);
 
-		// True for first person
-		// False for third person
+		glm::mat4 playerTransform = glm::mat4(1.0f);
+		glm::mat4 playerFront = glm::mat4(1.0f);
+		glm::vec3 _currentPlayerPos = sphere.getPosition();
+
+		// True for first person - False for third person
 		if (togglePlayerView)
 		{
 			mainCamera.toggleView = togglePlayerView;
+			// Debugging
 			vectorToString(closest_object);
 			vectorToString(mainCamera.getPlayerBodyPosition());
 		}
 		else
 		{
 			mainCamera.toggleView = togglePlayerView;
-			vectorToString(closest_object);
 		}
 
 		mainCamera.playerController(window, shaderScene, _currentPlayerPos, playerTransform, closest_object);
@@ -634,17 +656,19 @@ int main(int argc, char*argv[])
 
 		///////////////////////////////////////////////////////////////////////
 		////////
-		////////						LIGHT SOURCE SHADER
+		////////				LIGHT SOURCE SHADER / SCENE
 		////////
 		///////////////////////////////////////////////////////////////////////
+		
+		mainCamera.setShaderView(lightSourceScene, mainCamera.getViewMatrix());
+		mainCamera.setShaderProjection(lightSourceScene, projectionMatrix);
 
 		glUseProgram(lightSourceScene);
 
+		glBindVertexArray(light_sphere.getVAO());
 		SetUniformMat4(lightSourceScene, "model", glm::translate(glm::mat4(1.0f), lightPos) * glm::scale(glm::mat4(1.0f), glm::vec3(3.25f)));
 		SetUniformVec3(lightSourceScene, "lightColor", lightColor);
-
-		mainCamera.setShaderView(lightSourceScene, mainCamera.getViewMatrix());
-		mainCamera.setShaderProjection(lightSourceScene, projectionMatrix);
+		light_sphere.Draw();
 
         // End Frame
         glfwSwapBuffers(window);

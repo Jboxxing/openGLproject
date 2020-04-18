@@ -105,16 +105,18 @@ void CameraControl::initCameraControls(GLFWwindow* _window)
 void CameraControl::playerController(GLFWwindow* _window, GLuint _shader, glm::vec3 &_playerPos, glm::mat4 &_playerTransform, glm::vec3 &_objectPosition)
 {   
 	glfwGetCursorPos(_window, &this->mousePosX, &this->mousePosY);
-
 	float dt = glfwGetTime() - this->lastFrameTime;
 
+	// Switches from fast to regular speeds
 	bool fastCam = glfwGetKey(_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(_window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
 		float currentCameraSpeed = (fastCam) ? this->cameraFastSpeed : this->cameraSpeed;
 
+	// Deltas for mouse movement and player movement
 	double dx = this->mousePosX - this->lastMousePosX;
 	double dy = this->mousePosY - this->lastMousePosY;
-	
+
 	this->lastFrameTime += dt;
+	
 	this->lastMousePosX = this->mousePosX;
 	this->lastMousePosY  = this->mousePosY;
 
@@ -130,29 +132,31 @@ void CameraControl::playerController(GLFWwindow* _window, GLuint _shader, glm::v
 	glm::vec3 cameraSideVector = glm::cross(this->cameraLookAt, glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::normalize(cameraSideVector);
 
+	// Assuming that combined radius of the trees and the player can be no smaller than 3
+	float collision_radius = 2.2;
 	glm::vec3 bumper(this->cameraLookAt.x, 0.0f, this->cameraLookAt.z);
 
 	if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS)
 	{
-		if (glm::distance(this->playerPosition + bumper, _objectPosition) > 2)
+		if (glm::distance(this->playerPosition + bumper, _objectPosition) > collision_radius)
 			this->cameraPositon += this->cameraLookAt * dt * currentCameraSpeed;
 	}
 
 	if (glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS)
 	{
-		if (glm::distance(this->playerPosition + bumper, _objectPosition) > 2)
+		if (glm::distance(this->playerPosition + bumper, _objectPosition) > collision_radius)
 			this->cameraPositon -= this->cameraLookAt * dt * currentCameraSpeed;
 	}
 
 	if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS)
 	{
-		if (glm::distance(this->playerPosition + bumper, _objectPosition) > 2)
+		if (glm::distance(this->playerPosition + bumper, _objectPosition) > collision_radius)
 			this->cameraPositon += cameraSideVector * dt * currentCameraSpeed;
 	}
 
 	if (glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS)
 	{
-		if (glm::distance(this->playerPosition + bumper, _objectPosition) > 2)
+		if (glm::distance(this->playerPosition + bumper, _objectPosition) > collision_radius)
 			this->cameraPositon -= cameraSideVector * dt * currentCameraSpeed;
 	}
 
