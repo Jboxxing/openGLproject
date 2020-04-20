@@ -102,7 +102,7 @@ void CameraControl::initCameraControls(GLFWwindow* _window)
 	glfwGetCursorPos(_window, &this->lastMousePosX, &this->lastMousePosY);
 }
 
-void CameraControl::playerController(GLFWwindow* _window, GLuint _shader, glm::vec3 &_playerPos, glm::mat4 &_playerTransform, glm::vec3 &_objectPosition)
+void CameraControl::playerController(GLFWwindow* _window, GLuint _shader, glm::vec3 &_playerPos, glm::mat4 &_playerTransform, glm::vec3 &_objectPosition, glm::vec3& _objectScale)
 {   
 	glfwGetCursorPos(_window, &this->mousePosX, &this->mousePosY);
 	float dt = glfwGetTime() - this->lastFrameTime;
@@ -133,31 +133,44 @@ void CameraControl::playerController(GLFWwindow* _window, GLuint _shader, glm::v
 	glm::normalize(cameraSideVector);
 
 	// Assuming that combined radius of the trees and the player can be no smaller than 3
-	float collision_radius = 2.2;
+	float collision_radius = _objectScale.x * 3.0f;
 	glm::vec3 bumper(this->cameraLookAt.x, 0.0f, this->cameraLookAt.z);
+	float distance_from_object = glm::distance(this->playerPosition + glm::abs(glm::normalize(bumper)), _objectPosition);
+
+	std::cout << "Distance: " << distance_from_object << std::endl;
+	std::cout << "Radius: " << collision_radius << std::endl;
+	std::cout << "Bumper: " << bumper.x << " " << bumper.y << " " << bumper.z << std::endl;
 
 	if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS)
 	{
 		if (glm::distance(this->playerPosition + bumper, _objectPosition) > collision_radius)
 			this->cameraPositon += this->cameraLookAt * dt * currentCameraSpeed;
+		if ((glm::distance(this->playerPosition + bumper, _objectPosition) <= collision_radius) && fastCam)
+			this->cameraPositon -= cameraLookAt * dt * currentCameraSpeed;
 	}
 
 	if (glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS)
 	{
 		if (glm::distance(this->playerPosition + bumper, _objectPosition) > collision_radius)
 			this->cameraPositon -= this->cameraLookAt * dt * currentCameraSpeed;
+		if ((glm::distance(this->playerPosition + bumper, _objectPosition) <= collision_radius) && fastCam)
+			this->cameraPositon += cameraLookAt * dt * currentCameraSpeed;
 	}
 
 	if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS)
 	{
 		if (glm::distance(this->playerPosition + bumper, _objectPosition) > collision_radius)
 			this->cameraPositon += cameraSideVector * dt * currentCameraSpeed;
+		if ((glm::distance(this->playerPosition + bumper, _objectPosition) <= collision_radius) && fastCam)
+			this->cameraPositon -= cameraSideVector * dt * currentCameraSpeed;
 	}
 
 	if (glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS)
 	{
 		if (glm::distance(this->playerPosition + bumper, _objectPosition) > collision_radius)
 			this->cameraPositon -= cameraSideVector * dt * currentCameraSpeed;
+		if ((glm::distance(this->playerPosition + bumper, _objectPosition) <= collision_radius) && fastCam)
+			this->cameraPositon += cameraSideVector * dt * currentCameraSpeed;
 	}
 
 	// Clamp Y position

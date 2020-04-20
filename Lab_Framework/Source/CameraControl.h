@@ -77,5 +77,5 @@ public:
 	void setShaderView(GLuint _shaderProgram, glm::mat4 _viewMatrix);
 	void setShaderProjection(GLuint _shaderProgram, glm::mat4 _projectionMatrix);
 
-	void playerController(GLFWwindow * _window, GLuint _shader, glm::vec3 &_playerPos, glm::mat4 &_playerTransform, glm::vec3 &_objectPosition);
+	void playerController(GLFWwindow * _window, GLuint _shader, glm::vec3 &_playerPos, glm::mat4 &_playerTransform, glm::vec3 &_objectPosition, glm::vec3 &_objectScale);
 };

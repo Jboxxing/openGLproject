@@ -14,13 +14,13 @@
     <ProjectGuid>{277EAE68-9EED-4EFF-BAD3-2A70787A3E8D}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Labs</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -123,6 +123,7 @@
     <ClInclude Include="..\Source\OBJloaderV2.h" />
     <ClInclude Include="..\Source\SceneObject.h" />
     <ClInclude Include="..\Source\shaderloader.h" />
+    <ClInclude Include="..\Source\SkyBox.h" />
     <ClInclude Include="..\Source\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
@@ -130,6 +131,7 @@
     <ClCompile Include="..\Source\lab06.cpp" />
     <ClCompile Include="..\Source\LightSource.cpp" />
     <ClCompile Include="..\Source\SceneObject.cpp" />
+    <ClCompile Include="..\Source\SkyBox.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

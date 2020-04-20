@@ -19,9 +19,41 @@
 
 #include "SceneObject.h"
 #include "CameraControl.h"
+#include "SkyBox.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+GLuint loadCubeMap(vector<char*> faces)
+{
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+	int width, height, nrChannels;
+	for (unsigned int i = 0; i < faces.size(); i++)
+	{
+		unsigned char* data = stbi_load(faces[i], &width, &height, &nrChannels, 0);
+		if (data)
+		{
+			//glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+			stbi_image_free(data);
+		}
+		else
+		{
+			std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+			stbi_image_free(data);
+		}
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	return textureID;
+}
 
 GLuint loadTexture(const char* filename)
 {
@@ -32,15 +64,13 @@ GLuint loadTexture(const char* filename)
 
 	glBindTexture(GL_TEXTURE_2D, textureId);
 
-	// Step2 Set filter parameters
-
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	float borderColor[] = { 0.5f, 0.5f, 0.5f, 0.5f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 
 	// Step3 Load Textures with dimension data
 	int width, height, nrChannels;
@@ -316,9 +346,10 @@ int main(int argc, char*argv[])
 	////////
 	///////////////////////////////////////////////////////////////////////
 
-	GLuint shaderScene      = loadSHADER(shaderPathPrefix + "sceneVertex.glsl", shaderPathPrefix + "sceneFragment.glsl");
-	GLuint lightSourceScene = loadSHADER(shaderPathPrefix + "lightObjectVertex.glsl", shaderPathPrefix + "lightObjectFragment.glsl");
-	GLuint shaderShadow     = loadSHADER(shaderPathPrefix + "shadow_vertex.glsl", shaderPathPrefix + "shadow_fragment.glsl");
+	GLuint shaderScene       = loadSHADER(shaderPathPrefix + "sceneVertex.glsl", shaderPathPrefix + "sceneFragment.glsl");
+	GLuint lightSourceScene  = loadSHADER(shaderPathPrefix + "lightObjectVertex.glsl", shaderPathPrefix + "lightObjectFragment.glsl");
+	GLuint shaderShadow      = loadSHADER(shaderPathPrefix + "shadow_vertex.glsl", shaderPathPrefix + "shadow_fragment.glsl");
+	GLuint shaderSkybox      = loadSHADER(shaderPathPrefix + "skyboxVertex.glsl", shaderPathPrefix + "skyboxFragment.glsl");
 
 	GLuint brickTextureID    = loadTexture(brickTexture);
 	GLuint cementTextureID   = loadTexture(cementTexture);
@@ -412,6 +443,9 @@ int main(int argc, char*argv[])
 	glm::vec3 lastPos;
 	glm::vec3 lastSca;
 
+	// Skybox init
+	SkyBox skyBox(0);
+
 	srand((unsigned)time(0));
 
 	for (unsigned int i = 0; i < 200; i++) {
@@ -443,12 +477,12 @@ int main(int argc, char*argv[])
 	///////////////////////////////////////////////////////////////////////
 
 	SceneObject treeTrunk_cube("CUBE", glm::vec3(0.0f), shaderScene, treeBarkTextureID, cubePath, 0);
-	SceneObject treeTrunk_cylinder("CYLINDER", glm::vec3(0.0f), shaderScene, treeBarkTextureID, cylinderPath, 0);
 	SceneObject cube("CUBE", glm::vec3(0.0f), shaderScene, grassTextureID, cubePath, 0);
 	SceneObject sphere("SPHERE", glm::vec3(0.0f, -3.0f, -5.0f), shaderScene, brickTextureID, spherePath, 0);
 	SceneObject light_sphere("LIGHT", glm::vec3(0.0f), lightSourceScene, 0, spherePath, 0);
 	SceneObject floor_plane("FLOOR", glm::vec3(0.0f, -5.0f, 0.0f), shaderScene, grassTextureID, planePath, 0);
-	SceneObject player_cube("CUBE", mainCamera.getCameraPosition(), shaderScene, 0, cubePath, 0);
+	SceneObject treeTrunk_cylinder("CYLINDER", glm::vec3(0.0f), shaderScene, treeBarkTextureID, cylinderPath, 0);
+	//SceneObject player_cube("CUBE", mainCamera.getCameraPosition(), shaderScene, 0, cubePath, 0);
 
 	///////////////////////////////////////////////////////////////////////
 	////////
@@ -471,6 +505,10 @@ int main(int argc, char*argv[])
 	///////////////////////////////////////////////////////////////////////
 
 	bool viewType = false;
+
+	skyBox.texture = loadCubeMap(skyBox.createModels());
+	skyBox.init();
+	SetUniform1Value(shaderSkybox, "skybox", 0);
 
     // Entering Main Loop
     while(!glfwWindowShouldClose(window))
@@ -540,7 +578,7 @@ int main(int argc, char*argv[])
 
 			glm::vec3* currentObjPos = &objectPosVector.at(i);
 			glm::vec3* currentObjSca = &objectScaVector.at(i);
-			float currentRadius = currentObjSca->x * 4;
+			float currentRadius = currentObjSca->x * 4.0;
 
 			if (glm::distance(*currentObjPos, mainCamera.getCameraPosition()) > 100)
 			{
@@ -588,19 +626,20 @@ int main(int argc, char*argv[])
 		{
 			mainCamera.toggleView = togglePlayerView;
 			// Debugging
-			vectorToString(closest_object);
-			vectorToString(mainCamera.getPlayerBodyPosition());
+			//vectorToString(closest_object);
+			//vectorToString(mainCamera.getPlayerBodyPosition());
 		}
 		else
 		{
 			mainCamera.toggleView = togglePlayerView;
 		}
 
-		mainCamera.playerController(window, shaderScene, _currentPlayerPos, playerTransform, closest_object);
+		mainCamera.playerController(window, shaderScene, _currentPlayerPos, playerTransform, closest_object, closest_object_scale);
 
 		if (!togglePlayerView)
 		{
 			glBindVertexArray(sphere.getVAO());
+			sphere.setTexture(brickTextureID);
 			SetUniformMat4(shaderScene, "model", playerTransform);
 			sphere.Draw();
 
@@ -666,9 +705,21 @@ int main(int argc, char*argv[])
 		glUseProgram(lightSourceScene);
 
 		glBindVertexArray(light_sphere.getVAO());
-		SetUniformMat4(lightSourceScene, "model", glm::translate(glm::mat4(1.0f), lightPos) * glm::scale(glm::mat4(1.0f), glm::vec3(3.25f)));
+		SetUniformMat4(lightSourceScene, "model", glm::translate(glm::mat4(1.0f), lightPos) 
+			* glm::scale(glm::mat4(1.0f), glm::vec3(3.25f)));
 		SetUniformVec3(lightSourceScene, "lightColor", lightColor);
 		light_sphere.Draw();
+
+		///////////////////////////////////////////////////////////////////////
+		////////
+		////////						SKYBOX
+		////////
+		///////////////////////////////////////////////////////////////////////
+
+		glm::mat4 skyView = glm::mat4(glm::mat3(mainCamera.getViewMatrix()));
+		mainCamera.setShaderView(shaderSkybox, skyView);
+		mainCamera.setShaderProjection(shaderSkybox, projectionMatrix);
+		skyBox.draw(shaderSkybox);
 
         // End Frame
         glfwSwapBuffers(window);
