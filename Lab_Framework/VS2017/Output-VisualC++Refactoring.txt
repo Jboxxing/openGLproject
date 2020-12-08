@@ -1,0 +1,6 @@
+﻿
+Renamed 'playerController' to 'firstPersonController':
+------------------------------------------------------
+C:\dev\openGLproject\Lab_Framework\Source\CameraControl.cpp(108, 21)
+C:\dev\openGLproject\Lab_Framework\Source\CameraControl.h(79, 7)
+C:\dev\openGLproject\Lab_Framework\Source\lab06.cpp(491, 14)
